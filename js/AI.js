@@ -8,6 +8,7 @@ function optimalMove() {
     var trickyMove;
     var optimalMove = { piece: undefined, strength: 0 };
     var CLOSE_TO_WIN = 5;
+    var LOOKAHEAD = 9;
     var center = BOARD.getCenterPiece();
     var ai_horizontal_strength, ai_vertical_strength, ai_diagnol_strength,
     human_horizontal_strength, human_vertical_strength, human_diagnol_strength;
@@ -19,7 +20,6 @@ function optimalMove() {
         optimalMove.piece = center;
     } else {
         var humanLastMove = BOARD.lastMove(TYPES.HUMAN);
-        var LOOKAHEAD = BOARD.isCornerPiece(humanLastMove.x, humanLastMove.y) ? CLOSE_TO_WIN : 9;
         for (var i = 0; i < BOARD.grid.length; i++) {
             for (var j = 0; j < BOARD.grid.length; j++) {
                 var piece = BOARD.grid[i][j];
