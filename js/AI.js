@@ -1,24 +1,23 @@
-// Globals + Types
 "use strict";
 
 // T(n) = O(n^2)
 function optimalMove() {
-    var aiWinMove;
-    var humanWinMove;
-    var trickyMove;
-    var optimalMove = { piece: undefined, strength: 0 };
     var CLOSE_TO_WIN = 5;
-    var LOOKAHEAD = 9;
+    var TRICKY_MOVE = 9;
+    var aiWinMove, humanWinMove, trickyMove;
+    var optimalMove = { piece: undefined, strength: 0 };
     var center = BOARD.getCenterPiece();
     var ai_horizontal_strength, ai_vertical_strength, ai_diagnol_strength,
     human_horizontal_strength, human_vertical_strength, human_diagnol_strength;
 
-    if(BOARD.markedSpaces == 0) { // 
+    // Always choose a corner if starting
+    if(BOARD.markedSpaces == 0) {
         var piece = randomCorner();
         optimalMove.piece = piece;
-    } else if (!BOARD.spaceOccupied(center.x, center.y)) {
+    } else if (!BOARD.spaceOccupied(center.x, center.y)) { // Choose center if defending
         optimalMove.piece = center;
     } else {
+        // Find an optimal move ...
         var humanLastMove = BOARD.lastMove(TYPES.HUMAN);
         for (var i = 0; i < BOARD.grid.length; i++) {
             for (var j = 0; j < BOARD.grid.length; j++) {
@@ -37,7 +36,7 @@ function optimalMove() {
                         humanWinMove = piece;
                     }
                     // // Strong move ahead
-                    if((human_horizontal_strength + human_vertical_strength + human_diagnol_strength) == LOOKAHEAD) {
+                    if((human_horizontal_strength + human_vertical_strength + human_diagnol_strength) == TRICKY_MOVE) {
                         trickyMove = piece;
                     }
                     // Base case
@@ -50,6 +49,7 @@ function optimalMove() {
         }
     }
 
+    // Now that you have determined all posibilities, choose the strategy with the best outcome
     if(aiWinMove !== undefined) {
         optimalMove.piece = aiWinMove;
     } else if(humanWinMove !== undefined) {
@@ -62,40 +62,46 @@ function optimalMove() {
 }
 
 function horizontalStrength(board_piece, user) {
-    var center = Math.floor(BOARD.grid.length / 2);
+    var center = BOARD.getCenterPiece();
     var strength = tallyStrength(board_piece, user);
-    if (board_piece.x == center) { // Center + Non diagnols
-        strength += tallyStrength(BOARD.grid[board_piece.x - 1][board_piece.y], user) + tallyStrength(BOARD.grid[board_piece.x + 1][board_piece.y], user);
+    if (board_piece.x == center.x) { // Center + Non diagnols
+        strength += tallyStrength(BOARD.grid[board_piece.x - 1][board_piece.y], user) +
+        tallyStrength(BOARD.grid[board_piece.x + 1][board_piece.y], user);
     } else {
         var increment = board_piece.x === 0 ? 1 : -1; // Ends
-        strength += tallyStrength(BOARD.grid[board_piece.x + increment][board_piece.y], user) + tallyStrength(BOARD.grid[board_piece.x + (increment * 2)][board_piece.y], user);
+        strength += tallyStrength(BOARD.grid[board_piece.x + increment][board_piece.y], user) +
+        tallyStrength(BOARD.grid[board_piece.x + (increment * 2)][board_piece.y], user);
     }
     return strength;
 }
 
 function verticalStrength(board_piece, user) {
-    var center = Math.floor(BOARD.grid.length / 2);
+    var center = BOARD.getCenterPiece();
     var strength = tallyStrength(board_piece, user);
-    if (board_piece.y == center) { // Center + Non diagnols
-        strength += tallyStrength(BOARD.grid[board_piece.x][board_piece.y - 1], user) + tallyStrength(BOARD.grid[board_piece.x][board_piece.y + 1], user);
+    if (board_piece.y == center.y) { // Center + Non diagnols
+        strength += tallyStrength(BOARD.grid[board_piece.x][board_piece.y - 1], user) +
+        tallyStrength(BOARD.grid[board_piece.x][board_piece.y + 1], user);
     } else {
         var increment = board_piece.y === 0 ? 1 : -1; // Ends
-        strength += tallyStrength(BOARD.grid[board_piece.x][board_piece.y + increment], user) + tallyStrength(BOARD.grid[board_piece.x][board_piece.y + (increment * 2)], user);
+        strength += tallyStrength(BOARD.grid[board_piece.x][board_piece.y + increment], user) +
+        tallyStrength(BOARD.grid[board_piece.x][board_piece.y + (increment * 2)], user);
     }
     return strength;
 }
 
 function diagnolStrength(board_piece, user) {
-    var center = Math.floor(BOARD.grid.length / 2);
+    var center = BOARD.getCenterPiece();
     var strength = tallyStrength(board_piece, user);
-    if ((board_piece.x == center && board_piece.y != center) || (board_piece.y == center && board_piece.x != center)) { // Non Diagnols
+    if ((board_piece.x == center.x && board_piece.y != center.y) || (board_piece.y == center.y && board_piece.x != center.x)) { // Non Diagnols
         strength = 0;
-    } else if (board_piece.x == center && board_piece.y == center) { // Center
-        strength += Math.max((tallyStrength(BOARD.grid[board_piece.x - 1][board_piece.y - 1], user) + tallyStrength(BOARD.grid[board_piece.x + 1][board_piece.y + 1], user)), (tallyStrength(BOARD.grid[board_piece.x - 1][board_piece.y + 1], user) + tallyStrength(BOARD.grid[board_piece.x + 1][board_piece.y - 1], user)));
+    } else if (board_piece.x == center.x && board_piece.y == center.y) { // Center
+        strength += Math.max((tallyStrength(BOARD.grid[board_piece.x - 1][board_piece.y - 1], user) + tallyStrength(BOARD.grid[board_piece.x + 1][board_piece.y + 1], user)), 
+            (tallyStrength(BOARD.grid[board_piece.x - 1][board_piece.y + 1], user) + tallyStrength(BOARD.grid[board_piece.x + 1][board_piece.y - 1], user)));
     } else {
         var xIncrement = board_piece.x === 0 ? 1 : -1;
         var yIncrement = board_piece.y === 0 ? 1 : -1;
-        strength += tallyStrength(BOARD.grid[board_piece.x + xIncrement][board_piece.y + yIncrement], user) + tallyStrength(BOARD.grid[board_piece.x + (xIncrement * 2)][board_piece.y + (yIncrement * 2)], user);
+        strength += tallyStrength(BOARD.grid[board_piece.x + xIncrement][board_piece.y + yIncrement], user) +
+        tallyStrength(BOARD.grid[board_piece.x + (xIncrement * 2)][board_piece.y + (yIncrement * 2)], user);
     }
     return strength;
 }

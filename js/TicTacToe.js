@@ -1,6 +1,9 @@
 "use strict";
 // GLOBALS
 var aiPlayedLastMove = false;
+var humanScore = 0;
+var aiScore = 0;
+var tieCount = 0;
 var TYPES = {
     AI: 0,
     HUMAN: 1,
@@ -22,7 +25,7 @@ var BOARD = {
             piece.type = type;
             this.movesStack.push(piece);
             this.markedSpaces++;
-            var text = piece.type == TYPES.AI ? "fa fa-laptop faa-tada animated" : "fa fa-user faa-tada animated";
+            var text = piece.type == TYPES.AI ? "fa fa-laptop tada" : "fa fa-user tada";
             if(piece.type == TYPES.EMPTY) {
                 text = "";
             }
@@ -53,9 +56,6 @@ var BOARD = {
     },
     spaceOccupied: function (x, y) {
         return this.grid[x][y].type != TYPES.EMPTY;
-    },
-    isCornerPiece: function (x, y) {
-        return x == y || Math.abs(x - y) == 2;
     },
     lastMove: function (type) {
         var retVal = undefined;
@@ -92,29 +92,41 @@ function initGrid() {
 
 function evalGame() {
 	if(BOARD.typeWon(TYPES.AI)) {
-		alert("Artificial intelligence wins.");
 		$("#table div").off("click");
+        aiScore++;
+        updateScore();
+        alert("Artificial intelligence wins.");
 		return;
 	}
 
 	if(BOARD.isTied()) {
-		alert("Close, but not close enough.")
 		$("#table div").off("click");
+        tieCount++;
+        updateScore();
+        alert("Close, but not close enough.");
 		return;
 	}
 
 	if(BOARD.typeWon(TYPES.HUMAN)) {
-		confirm("Did you cheat?");
 		$("#table div").off("click");
+        humanScore++;
+        updateScore();
+        confirm("Did you cheat?");
 		return;
 	}
 
-	// Continue play
+	// No one has won, continue gameplay
 	if(aiPlayedLastMove) {
 		playerMove(evalGame);
 	} else {
         setTimeout(function(){ aiMove(evalGame); }, 300); // Wait for animation to complete
 	}
+}
+
+function updateScore() {
+    $("#scoreboard #ai_score").text(aiScore);
+    $("#scoreboard #human_score").text(humanScore);
+    $("#scoreboard #tie_score").text(tieCount);
 }
 
 function startGame() {
@@ -156,4 +168,5 @@ $("button#restart").click(function() {
     });
     startGame();
 });
+
 startGame();
