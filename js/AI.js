@@ -19,6 +19,7 @@ function optimalMove() {
     } else {
         // Find an optimal move ...
         var humanLastMove = BOARD.lastMove(TYPES.HUMAN);
+        TRICKY_MOVE = BOARD.isCornerPiece(humanLastMove.x, humanLastMove.y) ? CLOSE_TO_WIN : 9;
         for (var i = 0; i < BOARD.grid.length; i++) {
             for (var j = 0; j < BOARD.grid.length; j++) {
                 var piece = BOARD.grid[i][j];

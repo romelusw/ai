@@ -33,6 +33,9 @@ var BOARD = {
             htmlElem.html("<i class='" + text + "'></i>");
         }
     },
+    isCornerPiece: function (x, y) {
+        return x == y || Math.abs(x - y) == 2;
+    },
     isTied: function () {
         return this.markedSpaces == this.grid.length * this.grid.length;
     },
