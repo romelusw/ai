@@ -47,8 +47,6 @@ function optimalMove() {
                         optimalMove.piece = piece;
                         optimalMove.strength = ai_horizontal_strength + ai_vertical_strength + ai_diagnol_strength;
                     }
-                    console.log(piece, "[H] hstrength:", human_horizontal_strength, "vstrength:", human_vertical_strength, "dstrength:", human_diagnol_strength, "total:", human_horizontal_strength + human_vertical_strength + human_diagnol_strength);
-                    console.log(piece, "[A] hstrength:", ai_horizontal_strength, "vstrength:", ai_vertical_strength, "dstrength:", ai_diagnol_strength, "total:", ai_horizontal_strength + ai_vertical_strength + ai_diagnol_strength);
                 }
             }
         }
