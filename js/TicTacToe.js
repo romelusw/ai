@@ -34,7 +34,7 @@ var BOARD = {
         }
     },
     isCornerPiece: function (x, y) {
-        return x == y || Math.abs(x - y) == 2;
+        return (x == 0 || x == 2) && (y == 0 || y == 2);
     },
     isTied: function () {
         return this.markedSpaces == this.grid.length * this.grid.length;
@@ -133,7 +133,7 @@ function updateScore() {
 }
 
 function startGame() {
-	if(Math.random() < 0.5) {
+	if(false){//Math.random() < 0.5) {
 		aiMove(evalGame);
 	} else {
 		playerMove(evalGame);
