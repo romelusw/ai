@@ -1,4 +1,4 @@
 # ai
 Artificial Intelligence work
 
-http://romelusw.github.io/ai/
+http://romelusw.github.io/ai/tictactoe
