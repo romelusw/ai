@@ -16,6 +16,7 @@
  * --- Game   (gamestate, score, wumpusAlive, ... )
  * - Write the AI itself
  ******************************************************************************/
+package java.com.romelus_borucki.wumpus;
 
 import java.util.Scanner;
 
