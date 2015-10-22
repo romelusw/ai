@@ -4,9 +4,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.HashSet;
-import java.util.Scanner;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -20,12 +18,7 @@ public class WumpusBoardHelper {
      * Pattern for board dimensions.
      */
     private static final Pattern BOARD_DIMENSIONS_PATTERN = Pattern.compile("^Size.* (\\d+),(\\d+)$");
-
-    public static void main(final String...args) {
-        final ClassLoader classLoader = WumpusBoardHelper.class.getClassLoader();
-        final BoardPiece[][] board = readBoard(new File(classLoader.getResource("b1.txt").getFile()));
-        printBoard(board);
-    }
+    private static List<PieceType> nonSafePieces = Arrays.asList(PieceType.Breezy, PieceType.Wumpus, PieceType.Pit, PieceType.Stench);
 
     /**
      * Enumeration of the board pieces.
@@ -83,6 +76,24 @@ public class WumpusBoardHelper {
         }
 
         /**
+         * Getter for the row location.
+         *
+         * @return the row index
+         */
+        public int getX() {
+            return x;
+        }
+
+        /**
+         * Getter for the column location.
+         *
+         * @return the column index
+         */
+        public int getY() {
+            return y;
+        }
+
+        /**
          * Adds a type to the piece.
          *
          * @param type the type of piece to add
@@ -90,6 +101,16 @@ public class WumpusBoardHelper {
          */
         public boolean addType(final PieceType type) {
             return types.add(type);
+        }
+
+        /**
+         * Determine if a type exists on the piece.
+         *
+         * @param type the type to check
+         * @return flag indicating if type exists
+         */
+        public boolean hasType(final PieceType type) {
+            return types.contains(type);
         }
 
         /**
@@ -103,6 +124,17 @@ public class WumpusBoardHelper {
                 sb.append(type.literal);
             }
             return sb.toString();
+        }
+
+        /**
+         * Determines if the piece is safe to move into.
+         *
+         * @return flag indicating if the piece is safe
+         */
+        public boolean isSafe() {
+            final Set<PieceType> clone = new HashSet<PieceType>(types);
+            clone.retainAll(nonSafePieces);
+            return clone.isEmpty();
         }
     }
 
