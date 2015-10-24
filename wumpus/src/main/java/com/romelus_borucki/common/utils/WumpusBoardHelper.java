@@ -19,7 +19,8 @@ public class WumpusBoardHelper {
      * Pattern for board dimensions.
      */
     private static final Pattern BOARD_DIMENSIONS_PATTERN = Pattern.compile("^Size.* (\\d+),(\\d+)$");
-    private static List<PieceType> confirmedPieces = Arrays.asList(PieceType.Breezy, PieceType.Wumpus, PieceType.Pit, PieceType.Stench);
+    private static List<PieceType> gameEndingPieces = Arrays.asList(PieceType.Wumpus, PieceType.Gold, PieceType.Pit);
+    private static List<PieceType> confirmedPieces = ListUtils.union(gameEndingPieces, Arrays.asList(PieceType.Breezy, PieceType.Stench));
     private static List<PieceType> nonSafePieces = ListUtils.union(confirmedPieces, Arrays.asList(PieceType.QPit, PieceType.QWump));
 
     /**
@@ -143,7 +144,7 @@ public class WumpusBoardHelper {
          * @return flag indicating if the piece is safe
          */
         public boolean isSafe() {
-            final Set<PieceType> clone = new HashSet<PieceType>(nonSafePieces);
+            final Set<PieceType> clone = new HashSet<>(nonSafePieces);
             clone.retainAll(types);
             return clone.isEmpty();
         }
@@ -154,9 +155,20 @@ public class WumpusBoardHelper {
          * @return flag indicating if the piece is confirmed
          */
         public boolean isConfirmed() {
-            final Set<PieceType> clone = new HashSet<PieceType>(confirmedPieces);
+            final Set<PieceType> clone = new HashSet<>(confirmedPieces);
             clone.retainAll(types);
-            return clone.isEmpty();
+            return !clone.isEmpty();
+        }
+
+        /**
+         * Determines if the piece is "game-ending".
+         *
+         * @return flag indicating if the piece is game ending
+         */
+        public boolean isGameEnding() {
+            final Set<PieceType> clone = new HashSet<>(gameEndingPieces);
+            clone.retainAll(types);
+            return !clone.isEmpty();
         }
     }
 
@@ -184,7 +196,7 @@ public class WumpusBoardHelper {
                     final String[] tokens = line.split(",");
                     final int x = Integer.parseInt(tokens[0]);
                     final int y = Integer.parseInt(tokens[1]);
-                    final BoardPiece bp = new BoardPiece(x, y);
+                    final BoardPiece bp = new BoardPiece(y, x);
                     // Add all the types
                     for(int i = 2; i < tokens.length; i++) {
                         final PieceType type = PieceType.fromString(tokens[i]);

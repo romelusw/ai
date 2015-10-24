@@ -77,6 +77,15 @@ public class InferenceAgent {
      * @return a piece to move from the specified {@param bp}
      */
     public BoardPiece ask(final BoardPiece bp) {
+        // End game scenarios
+        if(bp.hasType(PieceType.Wumpus)) {
+            eatenByWumpus = true;
+        } else if(bp.hasType(PieceType.Pit)) {
+            fellIntoPit = true;
+        } else if(bp.hasType(PieceType.Gold)) {
+            hasGold = true;
+        }
+
         final List<BoardPieceEnhanced> neighbors = getNeighbors(bp);
         final int numNeighbors = neighbors.size();
         BoardPiece retVal = null;
@@ -106,33 +115,20 @@ public class InferenceAgent {
      * @param bp the piece
      */
     public void tell(final BoardPiece bp) {
-        // End game scenarios
-        if(bp.hasType(PieceType.Wumpus)) {
-            eatenByWumpus = true;
-            System.out.println("== Eaten ==");
-            System.exit(1);
-        } else if(bp.hasType(PieceType.Pit)) {
-            fellIntoPit = true;
-            System.out.println("== Fell into pit ==");
-            System.exit(1);
-        } else if(bp.hasType(PieceType.Gold)) {
-            hasGold = true;
-            System.out.println("== Found the gold ==");
-            System.exit(0);
-        }
-
-        BoardPieceEnhanced bpe = knowledgeBase[bp.getY()][bp.getX()];
+        BoardPieceEnhanced bpe = knowledgeBase[bp.getX()][bp.getY()];
         if(bpe == null) { // First time only
             final Set<PieceType> types = new HashSet<>(Arrays.asList(implicationMap.get(bp.getTypes().toArray()[0]).getImplies()));
-            bpe = knowledgeBase[bp.getY()][bp.getX()] = new BoardPieceEnhanced(bp.getY(), bp.getX(), types);
-        } else if(bpe.isConfirmed() && bpe.getVisitCount() > 0) {
-            // Skip those we have already confirmed
-            return;
+            bpe = knowledgeBase[bp.getX()][bp.getY()] = new BoardPieceEnhanced(bp.getX(), bp.getY(), types);
         }
 
         // Update the KB with the type found from the game board
         if(bp.getTypes().size() > 0) {
             bpe.setType(((PieceType) bp.getTypes().toArray()[0]));
+        }
+
+        // Skip those we have already confirmed
+        if(bpe.isGameEnding() || bpe.isConfirmed() && bpe.getVisitCount() > 1) {
+            return;
         }
 
         for (final BoardPieceEnhanced neighbor : getNeighbors(bp)) {
@@ -245,7 +241,7 @@ public class InferenceAgent {
         final Set<PieceType> emptySet = Collections.EMPTY_SET;
 
         // North
-        int northX = bp.getX() + 0, northY = bp.getY() + -1;
+        int northX = bp.getX(), northY = bp.getY() + 1;
         if(withinWidth(northX) && withinHeight(northY)) {
             if(knowledgeBase[northX][northY] == null) {
                 knowledgeBase[northX][northY] = new BoardPieceEnhanced(northX, northY, emptySet);
@@ -253,7 +249,7 @@ public class InferenceAgent {
             neighbors.add(knowledgeBase[northX][northY]);
         }
         // South
-        northX = bp.getX() + 0; northY = bp.getY() + 1;
+        northX = bp.getX(); northY = bp.getY() - 1;
         if(withinWidth(northX) && withinHeight(northY)) {
             if(knowledgeBase[northX][northY] == null) {
                 knowledgeBase[northX][northY] = new BoardPieceEnhanced(northX, northY, emptySet);
@@ -261,7 +257,7 @@ public class InferenceAgent {
             neighbors.add(knowledgeBase[northX][northY]);
         }
         // East
-        northX = bp.getX() + 1; northY = bp.getY() + 0;
+        northX = bp.getX() + 1; northY = bp.getY();
         if(withinWidth(northX) && withinHeight(northY)) {
             if(knowledgeBase[northX][northY] == null) {
                 knowledgeBase[northX][northY] = new BoardPieceEnhanced(northX, northY, emptySet);
@@ -269,7 +265,7 @@ public class InferenceAgent {
             neighbors.add(knowledgeBase[northX][northY]);
         }
         // West
-        northX = bp.getX() + -1; northY = bp.getY() + 0;
+        northX = bp.getX() - 1; northY = bp.getY();
         if(withinWidth(northX) && withinHeight(northY)) {
             if(knowledgeBase[northX][northY] == null) {
                 knowledgeBase[northX][northY] = new BoardPieceEnhanced(northX, northY, emptySet);
@@ -296,7 +292,7 @@ public class InferenceAgent {
      */
     private boolean withinWidth(final int x) {
         final int rows = knowledgeBase.length;
-        return x >= 0 && x <= rows;
+        return x >= 0 && x < rows;
 
     }
 
@@ -308,7 +304,7 @@ public class InferenceAgent {
      */
     private boolean withinHeight(final int y) {
         final int cols = knowledgeBase[0].length;
-        return y >= 0 && y <= cols;
+        return y >= 0 && y < cols;
     }
 
     /**
