@@ -1,5 +1,6 @@
 package com.romelus_borucki.common.utils;
 
+import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
@@ -18,13 +19,14 @@ public class WumpusBoardHelper {
      * Pattern for board dimensions.
      */
     private static final Pattern BOARD_DIMENSIONS_PATTERN = Pattern.compile("^Size.* (\\d+),(\\d+)$");
-    private static List<PieceType> nonSafePieces = Arrays.asList(PieceType.Breezy, PieceType.Wumpus, PieceType.Pit, PieceType.Stench);
+    private static List<PieceType> confirmedPieces = Arrays.asList(PieceType.Breezy, PieceType.Wumpus, PieceType.Pit, PieceType.Stench);
+    private static List<PieceType> nonSafePieces = ListUtils.union(confirmedPieces, Arrays.asList(PieceType.QPit, PieceType.QWump));
 
     /**
      * Enumeration of the board pieces.
      */
     public enum PieceType {
-        Wumpus("W"), Breezy("B"), Gold("G"), Stench("S"), Pit("P"), Enter("E"), Empty("");
+        Wumpus("W"), QWump("?W"), Breezy("B"), Gold("G"), Stench("S"), Pit("P"), QPit("?P"), Enter("E"), Ok("Ok");
         /**
          * The string literal representing the piece.
          */
@@ -40,12 +42,12 @@ public class WumpusBoardHelper {
         }
 
         /**
-         * Converts a string into its enumerable state, any non recognized string will be converted to {@link PieceType#Empty}.
+         * Converts a string into its enumerable state.
          * @param s the string to convert
          * @return the converted {@link PieceType}
          */
         public static PieceType fromString(final String s) {
-            PieceType retVal = PieceType.Empty;
+            PieceType retVal = null;
             for(PieceType b : values()) {
                 if(b.literal.equalsIgnoreCase(s)) {
                     retVal = b;
@@ -114,13 +116,22 @@ public class WumpusBoardHelper {
         }
 
         /**
-         * Getter for types.
+         * Getter for the types.
          *
          * @return the types
          */
-        public String getTypes() {
+        public Set<PieceType> getTypes() {
+            return types;
+        }
+
+        /**
+         * Retrieves the types in string format.
+         *
+         * @return the types
+         */
+        public String typesToString() {
             final StringBuilder sb = new StringBuilder();
-            for(PieceType type : types) {
+            for(final PieceType type : types) {
                 sb.append(type.literal);
             }
             return sb.toString();
@@ -132,8 +143,19 @@ public class WumpusBoardHelper {
          * @return flag indicating if the piece is safe
          */
         public boolean isSafe() {
-            final Set<PieceType> clone = new HashSet<PieceType>(types);
-            clone.retainAll(nonSafePieces);
+            final Set<PieceType> clone = new HashSet<PieceType>(nonSafePieces);
+            clone.retainAll(types);
+            return clone.isEmpty();
+        }
+
+        /**
+         * Determines if the piece is "confirmed".
+         *
+         * @return flag indicating if the piece is confirmed
+         */
+        public boolean isConfirmed() {
+            final Set<PieceType> clone = new HashSet<PieceType>(confirmedPieces);
+            clone.retainAll(types);
             return clone.isEmpty();
         }
     }
@@ -165,9 +187,12 @@ public class WumpusBoardHelper {
                     final BoardPiece bp = new BoardPiece(x, y);
                     // Add all the types
                     for(int i = 2; i < tokens.length; i++) {
-                        bp.addType(PieceType.fromString(tokens[i]));
+                        final PieceType type = PieceType.fromString(tokens[i]);
+                        if(type != null) {
+                            bp.addType(type);
+                        }
                     }
-                    retVal[x][y] = bp;
+                    retVal[y][x] = bp;
                 }
                 lineNum++;
             }
@@ -189,7 +214,8 @@ public class WumpusBoardHelper {
         final StringBuilder sb = new StringBuilder(tableHeader);
         for(int i = rows - 1; i >= 0; i--) {
             for(int j = 0; j < cols; j++) {
-                final String types = board[j][i].getTypes().toString();
+                final BoardPiece piece = board[i][j];
+                final String types = piece == null ? "" : piece.typesToString().toString();
                 sb.append("|")
                         .append(StringUtils.center(String.format("  %s  ", types), 9));
             }

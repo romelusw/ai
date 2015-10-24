@@ -11,29 +11,44 @@ import java.io.File;
  * @author romelus
  */
 public class GameRunner {
-    private static final String testFile = GameRunner.class.getResource("b1.txt").getFile();
-
     /**
      * Main.
      *
      * @param args command line arguments
      */
     public static void main(final String ...args) {
-        final WumpusBoardHelper.BoardPiece[][] board = WumpusBoardHelper.readBoard(new File(testFile));
+        final WumpusBoardHelper.BoardPiece[][] board =
+                WumpusBoardHelper.readBoard(new File(GameRunner.class.getClassLoader().getResource("b1.txt").getFile()));
+        WumpusBoardHelper.printBoard(board);
         final InferenceAgent ai = new InferenceAgent(board.length, board[0].length);
-        String results = "";
+        int score = 0;
+        WumpusBoardHelper.BoardPiece currLoc = board[0][0];
+        final StringBuilder results = new StringBuilder();
 
         // Game-loop
         while(!ai.isDead() && !ai.hasExited()) {
-
+            System.out.println("Curr location: " + currLoc.getX() + "," + currLoc.getY());
+            ai.tell(currLoc);
+            WumpusBoardHelper.printBoard(ai.getKnowledgeBase());
+            WumpusBoardHelper.BoardPiece aiPiece = ai.ask(currLoc);
+            currLoc = board[aiPiece.getX()][aiPiece.getY()];
+            score--;
         }
 
         if(ai.isDead()) {
-            results = "Unfortunately the Ai has died.";
+            results.append("Unfortunately the Ai has died.");
+            if(ai.eatenByWumpus) {
+                results.append("\t༼⍨༽ is full.");
+            } else {
+                results.append("\tFallen and can't get out of the pit.");
+            }
         } else {
-            results = String.format("The Ai has exited the Wumpus world %s", ai.hasGold() ? "with the gold in hand!":  "empty handed :(");
+            results.append("The Ai has exited the Wumpus world.");
+            if(ai.hasGold()) {
+                score += 1000;
+                results.append("\tWith gold in hand (•‿•)");
+            }
         }
-
-        System.out.println(results);
+        System.out.println(results + String.format(" Total score:%d", score));
     }
 }
