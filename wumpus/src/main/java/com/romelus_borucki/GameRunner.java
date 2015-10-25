@@ -17,23 +17,25 @@ public class GameRunner {
      * @param args command line arguments
      */
     public static void main(final String ...args) {
-        final WumpusBoardHelper.BoardPiece[][] board =
-                WumpusBoardHelper.readBoard(new File(GameRunner.class.getClassLoader().getResource("b3.txt").getFile()));
+        final WumpusBoardHelper.BoardPiece[][] board = WumpusBoardHelper.readBoard(new File(GameRunner.class.getClassLoader().getResource("b2.txt").getFile()));
         final InferenceAgent ai = new InferenceAgent(board.length, board[0].length);
         final StringBuilder results = new StringBuilder();
-        int score = 0;
+        int score = 0, actions = 0;
 
         WumpusBoardHelper.BoardPiece currLoc = findEntrance(board);
         WumpusBoardHelper.printBoard(board);
 
         // Game-loop
         while(!ai.isDead() && !ai.hasGold()) {
-            System.out.println("Curr location: " + currLoc.getY() + "," + currLoc.getX());
+            System.out.println("Ai position: " + (currLoc.getY() + 1) + "," + (currLoc.getX() + 1));
             ai.tell(currLoc);
             WumpusBoardHelper.printBoard(ai.getKnowledgeBase());
             WumpusBoardHelper.BoardPiece aiPiece = ai.ask(currLoc);
             currLoc = board[aiPiece.getX()][aiPiece.getY()];
-            score--;
+            // var clockwise = d - c;
+            // var cclockwise = (4 - clockwise) % 4;
+            // console.log("direction:", clockwise < cclockwise ? 1 : -1, " amount:", Math.min(clockwise, cclockwise));
+            actions++;
         }
 
         if(ai.isDead()) {
@@ -50,7 +52,7 @@ public class GameRunner {
                 results.append(" With gold in hand (•‿•)");
             }
         }
-        System.out.println(results + String.format(" Total score: %d", score));
+        System.out.println(results + String.format(" Total score: %d, Number of actions: %d", score - actions, actions));
     }
 
     public static WumpusBoardHelper.BoardPiece findEntrance(WumpusBoardHelper.BoardPiece[][] board) {

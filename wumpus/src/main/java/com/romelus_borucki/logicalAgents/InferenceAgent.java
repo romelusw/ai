@@ -47,14 +47,18 @@ public class InferenceAgent {
      * Add rules.
      */
     static {
+        // Direct relation inferences
+        implicationMap.put(PieceType.Enter, new Implication<>(Implication.Operator.NONE, PieceType.Ok));
         implicationMap.put(PieceType.Ok, new Implication<>(Implication.Operator.NONE, PieceType.Ok));
+        implicationMap.put(PieceType.Safe, new Implication<>(Implication.Operator.NONE, PieceType.Ok));
         implicationMap.put(PieceType.Breezy, new Implication<>(Implication.Operator.NONE, PieceType.QPit));
         implicationMap.put(PieceType.Stench, new Implication<>(Implication.Operator.NONE, PieceType.QWump));
-        implicationMap.put(PieceType.Enter, new Implication<>(Implication.Operator.NONE, PieceType.Ok));
 
+        // Neighbor (all) relation inferences
         implicationMap.put(PieceType.Pit, new Implication<>(Implication.Operator.AND, PieceType.Breezy));
         implicationMap.put(PieceType.Wumpus, new Implication<>(Implication.Operator.AND, PieceType.Stench));
 
+        // Neighbor (some) relation inferences
         implicationMap.put(PieceType.QPit, new Implication<>(Implication.Operator.OR, PieceType.Breezy));
         implicationMap.put(PieceType.QWump, new Implication<>(Implication.Operator.OR, PieceType.Stench));
     }
@@ -77,6 +81,11 @@ public class InferenceAgent {
      * @return a piece to move from the specified {@param bp}
      */
     public BoardPiece ask(final BoardPiece bp) {
+        final List<BoardPieceEnhanced> neighbors = getNeighbors(bp);
+        final int numNeighbors = neighbors.size();
+        BoardPiece retVal = null;
+        BoardPiece backtrack = null;
+
         // End game scenarios
         if(bp.hasType(PieceType.Wumpus)) {
             eatenByWumpus = true;
@@ -85,11 +94,6 @@ public class InferenceAgent {
         } else if(bp.hasType(PieceType.Gold)) {
             hasGold = true;
         }
-
-        final List<BoardPieceEnhanced> neighbors = getNeighbors(bp);
-        final int numNeighbors = neighbors.size();
-        BoardPiece retVal = null;
-        BoardPiece backtrack = null;
 
         for(int i = 0; i < numNeighbors; i++) {
             // Allow for random selection from neighbors
@@ -117,8 +121,7 @@ public class InferenceAgent {
     public void tell(final BoardPiece bp) {
         BoardPieceEnhanced bpe = knowledgeBase[bp.getX()][bp.getY()];
         if(bpe == null) { // First time only
-            final Set<PieceType> types = new HashSet<>(Arrays.asList(implicationMap.get(bp.getTypes().toArray()[0]).getImplies()));
-            bpe = knowledgeBase[bp.getX()][bp.getY()] = new BoardPieceEnhanced(bp.getX(), bp.getY(), types);
+            bpe = knowledgeBase[bp.getX()][bp.getY()] = new BoardPieceEnhanced(bp.getX(), bp.getY());
         }
 
         // Update the KB with the type found from the game board
@@ -178,7 +181,7 @@ public class InferenceAgent {
         switch (type) {
             case QPit:
             case QWump:
-                retVal = PieceType.Ok;
+                retVal = PieceType.Safe;
                 break;
         }
         return retVal;
@@ -238,13 +241,12 @@ public class InferenceAgent {
      */
     private List<BoardPieceEnhanced> getNeighbors(final BoardPiece bp) {
         final List<BoardPieceEnhanced> neighbors = new ArrayList<>();
-        final Set<PieceType> emptySet = Collections.EMPTY_SET;
 
         // North
         int northX = bp.getX(), northY = bp.getY() + 1;
         if(withinWidth(northX) && withinHeight(northY)) {
             if(knowledgeBase[northX][northY] == null) {
-                knowledgeBase[northX][northY] = new BoardPieceEnhanced(northX, northY, emptySet);
+                knowledgeBase[northX][northY] = new BoardPieceEnhanced(northX, northY);
             }
             neighbors.add(knowledgeBase[northX][northY]);
         }
@@ -252,7 +254,7 @@ public class InferenceAgent {
         northX = bp.getX(); northY = bp.getY() - 1;
         if(withinWidth(northX) && withinHeight(northY)) {
             if(knowledgeBase[northX][northY] == null) {
-                knowledgeBase[northX][northY] = new BoardPieceEnhanced(northX, northY, emptySet);
+                knowledgeBase[northX][northY] = new BoardPieceEnhanced(northX, northY);
             }
             neighbors.add(knowledgeBase[northX][northY]);
         }
@@ -260,7 +262,7 @@ public class InferenceAgent {
         northX = bp.getX() + 1; northY = bp.getY();
         if(withinWidth(northX) && withinHeight(northY)) {
             if(knowledgeBase[northX][northY] == null) {
-                knowledgeBase[northX][northY] = new BoardPieceEnhanced(northX, northY, emptySet);
+                knowledgeBase[northX][northY] = new BoardPieceEnhanced(northX, northY);
             }
             neighbors.add(knowledgeBase[northX][northY]);
         }
@@ -268,7 +270,7 @@ public class InferenceAgent {
         northX = bp.getX() - 1; northY = bp.getY();
         if(withinWidth(northX) && withinHeight(northY)) {
             if(knowledgeBase[northX][northY] == null) {
-                knowledgeBase[northX][northY] = new BoardPieceEnhanced(northX, northY, emptySet);
+                knowledgeBase[northX][northY] = new BoardPieceEnhanced(northX, northY);
             }
             neighbors.add(knowledgeBase[northX][northY]);
         }
@@ -321,13 +323,9 @@ public class InferenceAgent {
          *
          * @param xloc the x-position of the piece on the board
          * @param yloc the y-position of the piece on the board
-         * @param types the types associated to the piece
          */
-        public BoardPieceEnhanced(final int xloc, final int yloc, final Set<PieceType> types) {
+        public BoardPieceEnhanced(final int xloc, final int yloc) {
             super(xloc, yloc);
-            for(final PieceType type : types) {
-                super.addType(type);
-            }
         }
 
         /**
@@ -366,11 +364,3 @@ public class InferenceAgent {
         }
     }
 }
-//    var clockwise = d - c;
-//    var cclockwise = (4 - clockwise) % 4;
-//    console.log("direction:", clockwise < cclockwise ? 1 : -1, " amount:", Math.min(clockwise, cclockwise));
-//    S   =   "one of your neighbors is"    ?W
-//            B   =   "one of your neighbors is"    ?P
-//            ?P  =>  "All of your neighbors are"   B
-//    OK  =>  "All of your neighbors are"   OK
-//    #?W  =>  "All of your neighbors are"   B'
