@@ -17,13 +17,35 @@ public class GameRunner {
      * @param args command line arguments
      */
     public static void main(final String ...args) {
-        final WumpusBoardHelper.BoardPiece[][] board = WumpusBoardHelper.readBoard(new File(GameRunner.class.getClassLoader().getResource("b2.txt").getFile()));
-        final InferenceAgent ai = new InferenceAgent(board.length, board[0].length);
+        final int NUM_TEST_RUNS = 1;
+        int won = 0;
+        int loss = 0;
+        final File test_file = new File(GameRunner.class.getClassLoader().getResource("b5.txt").getFile());
+        final WumpusBoardHelper.BoardPiece[][] gameBoard = WumpusBoardHelper.readBoard(test_file);
+
+        // Play several games to see general outcomes
+        for(int i = 0; i < NUM_TEST_RUNS; i++) {
+            if(new GameRunner().playGame(gameBoard) == 0) {
+                won++;
+            } else {
+                loss++;
+            }
+        }
+        System.out.println(String.format("Win/lose ratio %d/%d out of %d games.", won, loss, NUM_TEST_RUNS));
+    }
+
+    /**
+     * Plays the autonomous wumpus game.
+     */
+    public int playGame(final WumpusBoardHelper.BoardPiece[][] gameBoard) {
+        final InferenceAgent ai = new InferenceAgent(gameBoard.length, gameBoard[0].length);
         final StringBuilder results = new StringBuilder();
         int score = 0, actions = 0;
+        int winLoss = 0; // 0: Win 1: Loss
 
-        WumpusBoardHelper.BoardPiece currLoc = findEntrance(board);
-        WumpusBoardHelper.printBoard(board);
+        WumpusBoardHelper.BoardPiece currLoc = findEntrance(gameBoard);
+        System.out.println("Gameboard:");
+        WumpusBoardHelper.printBoard(gameBoard);
 
         // Game-loop
         while(!ai.isDead() && !ai.hasGold()) {
@@ -31,7 +53,7 @@ public class GameRunner {
             ai.tell(currLoc);
             WumpusBoardHelper.printBoard(ai.getKnowledgeBase());
             WumpusBoardHelper.BoardPiece aiPiece = ai.ask(currLoc);
-            currLoc = board[aiPiece.getX()][aiPiece.getY()];
+            currLoc = gameBoard[aiPiece.getX()][aiPiece.getY()];
             // var clockwise = d - c;
             // var cclockwise = (4 - clockwise) % 4;
             // console.log("direction:", clockwise < cclockwise ? 1 : -1, " amount:", Math.min(clockwise, cclockwise));
@@ -45,6 +67,7 @@ public class GameRunner {
             } else {
                 results.append(" Fallen and can't get out of the pit.");
             }
+            winLoss = 1;
         } else {
             results.append("The Ai has exited the Wumpus world.");
             if(ai.hasGold()) {
@@ -53,6 +76,7 @@ public class GameRunner {
             }
         }
         System.out.println(results + String.format(" Total score: %d, Number of actions: %d", score - actions, actions));
+        return winLoss;
     }
 
     public static WumpusBoardHelper.BoardPiece findEntrance(WumpusBoardHelper.BoardPiece[][] board) {
@@ -60,7 +84,7 @@ public class GameRunner {
         for(int i = 0; i < board.length; i++) {
             for (int j = 0; j < board[0].length; j++) {
                 if(board[i][j].hasType(WumpusBoardHelper.PieceType.Enter)) {
-                   return board[i][j];
+                    return board[i][j];
                 }
             }
         }

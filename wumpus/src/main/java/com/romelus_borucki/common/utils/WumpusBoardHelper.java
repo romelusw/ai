@@ -19,15 +19,15 @@ public class WumpusBoardHelper {
      * Pattern for board dimensions.
      */
     private static final Pattern BOARD_DIMENSIONS_PATTERN = Pattern.compile("^Size.* (\\d+),(\\d+)$");
-    private static List<PieceType> gameEndingPieces = Arrays.asList(PieceType.Wumpus, PieceType.Gold, PieceType.Pit);
-    private static List<PieceType> confirmedPieces = ListUtils.union(gameEndingPieces, Arrays.asList(PieceType.Breezy, PieceType.Stench, PieceType.Safe));
-    private static List<PieceType> nonSafePieces = ListUtils.union(gameEndingPieces, Arrays.asList(PieceType.Breezy, PieceType.Stench, PieceType.QPit, PieceType.QWump));
+    private static final List<PieceType> safePieces = Arrays.asList(PieceType.Safe, PieceType.Ok, PieceType.Gold, PieceType.Enter);
+    private static final List<PieceType> gameEndingPieces = Arrays.asList(PieceType.Wumpus, PieceType.Gold, PieceType.Pit);
+    private static final List<PieceType> confirmedPieces = ListUtils.union(gameEndingPieces, Arrays.asList(PieceType.Breezy, PieceType.Stench, PieceType.Safe));
 
     /**
      * Enumeration of the board pieces.
      */
     public enum PieceType {
-        Wumpus("W"), QWump("?W"), Breezy("B"), Gold("G"), Stench("S"), Pit("P"), QPit("?P"), Enter("E"), Ok("Ok"), Safe("✓");
+        Wumpus("W"), QWump("?W"), Stench("S"), Pit("P"), QPit("?P"), Breezy("B"), Gold("G"), Enter("E"), Ok("Ok"), Safe("✓");
         /**
          * The string literal representing the piece.
          */
@@ -144,9 +144,9 @@ public class WumpusBoardHelper {
          * @return flag indicating if the piece is safe
          */
         public boolean isSafe() {
-            final Set<PieceType> clone = new HashSet<>(nonSafePieces);
+            final Set<PieceType> clone = new HashSet<>(safePieces);
             clone.retainAll(types);
-            return clone.isEmpty();
+            return !clone.isEmpty();
         }
 
         /**

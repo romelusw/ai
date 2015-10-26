@@ -18,7 +18,7 @@ public class Implication<T> {
      * Logical operators.
      */
     public enum Operator {
-        AND, OR, NONE
+        AND, NONE
     }
 
     /**
