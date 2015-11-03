@@ -131,7 +131,7 @@ public class InferenceAgent {
         }
 
         // Update the KB with the type found from the game board
-        bpe.setType(bp.getTypes().isEmpty() ? PieceType.Safe : ((PieceType) bp.getTypes().toArray()[0]));
+        bpe.setType(bp.getTypes().isEmpty() ? Arrays.asList(PieceType.Safe) : bp.getTypes());
 
         // Skip those we have already confirmed
         if(bpe.isGameEnding() || bpe.isConfirmed() && bpe.getVisitCount() > 1) {
@@ -143,13 +143,16 @@ public class InferenceAgent {
             if (neighbor.getTypes().isEmpty()) {
                 neighbor.addType(bpe.getImplication().getImplies());
             } else if (neighbor.hasType(PieceType.QPit) || neighbor.hasType(PieceType.QWump)) {
-                final PieceType assumedType = assumeType((PieceType) neighbor.getTypes().toArray()[0]);
-                if(runInference(implicationMap.get(assumedType), getNeighbors(neighbor))) {
-                    // Confirm
-                    neighbor.setType(assumeType((PieceType) neighbor.getTypes().toArray()[0]));
-                } else {
-                    // Negate
-                    neighbor.setType(negateType((PieceType) neighbor.getTypes().toArray()[0]));
+                final Set<Map.Entry<PieceType, PieceType>> assumedTypes = assumeTypes(neighbor.getTypes()).entrySet();
+                for(final Map.Entry<PieceType, PieceType> type : assumedTypes) {
+                    final Implication<PieceType> implies = implicationMap.get(type.getValue());
+                    if(runInference(implies, getNeighbors(neighbor))) {
+                        // Confirm
+                        neighbor.addType(implies.getImplies());
+                    } else {
+                        // Negate
+                        neighbor.getTypes().remove(type.getKey());
+                    }
                 }
             }
         }
@@ -157,37 +160,22 @@ public class InferenceAgent {
     }
 
     /**
-     * Assume a questionable piece to be true.
+     * Assume a questionable pieces to be true.
      *
-     * @param type the questionable type
-     * @return the assumed opposite
+     * @param types the questionable types
+     * @return the assumed opposites
      */
-    public PieceType assumeType(final PieceType type) {
-        PieceType retVal = null;
-        switch (type) {
-            case QPit:
-                retVal = PieceType.Pit;
-                break;
-            case QWump:
-                retVal = PieceType.Wumpus;
-                break;
-        }
-        return retVal;
-    }
-
-    /**
-     * Negates a questionable type.
-     *
-     * @param type the questionable type
-     * @return the assumed opposite
-     */
-    public PieceType negateType(final PieceType type) {
-        PieceType retVal = null;
-        switch (type) {
-            case QPit:
-            case QWump:
-                retVal = PieceType.Safe;
-                break;
+    public Map<PieceType, PieceType> assumeTypes(final Set<PieceType> types) {
+        final Map<PieceType, PieceType> retVal = new HashMap<>(types.size());
+        for(final PieceType type : types) {
+            switch (type) {
+                case QPit:
+                    retVal.put(type, PieceType.Pit);
+                    break;
+                case QWump:
+                    retVal.put(type, PieceType.Wumpus);
+                    break;
+            }
         }
         return retVal;
     }
@@ -360,11 +348,11 @@ public class InferenceAgent {
         /**
          * Sets the type for the piece.
          *
-         * @param type the type to set
+         * @param types the types to set
          */
-        public void setType(final PieceType type) {
+        public void setType(final Collection<PieceType> types) {
             super.getTypes().clear();
-            super.addType(type);
+            super.getTypes().addAll(types);
         }
     }
 }

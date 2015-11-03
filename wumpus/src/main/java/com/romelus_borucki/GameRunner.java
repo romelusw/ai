@@ -75,7 +75,7 @@ public class GameRunner {
                 results.append(" With gold in hand (•‿•)");
             }
         }
-        System.out.println(results + String.format(" Total score: %d, Number of actions: %d", score - actions, actions));
+//        System.out.println(results + String.format(" Total score: %d, Number of actions: %d", score - actions, actions));
         return winLoss;
     }
 
