@@ -145,14 +145,15 @@ public class InferenceAgent {
             } else if (neighbor.hasType(PieceType.QPit) || neighbor.hasType(PieceType.QWump)) {
                 final Set<Map.Entry<PieceType, PieceType>> assumedTypes = assumeTypes(neighbor.getTypes()).entrySet();
                 for(final Map.Entry<PieceType, PieceType> type : assumedTypes) {
-                    final Implication<PieceType> implies = implicationMap.get(type.getValue());
-                    if(runInference(implies, getNeighbors(neighbor))) {
+                    final Set<PieceType> neighborTypes = neighbor.getTypes();
+                    if(runInference(implicationMap.get(type.getValue()), getNeighbors(neighbor))) {
                         // Confirm
-                        neighbor.addType(implies.getImplies());
+                        neighbor.addType(type.getValue());
                     } else {
                         // Negate
-                        neighbor.getTypes().remove(type.getKey());
+                        neighborTypes.add(PieceType.Ok);
                     }
+                    neighborTypes.remove(type.getKey());
                 }
             }
         }

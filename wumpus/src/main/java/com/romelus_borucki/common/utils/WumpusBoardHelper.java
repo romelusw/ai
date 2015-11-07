@@ -60,6 +60,32 @@ public class WumpusBoardHelper {
     }
 
     /**
+     * Enumeration of cardinal directions.
+     */
+    public enum Direction {
+        North(0, 1), South(0, -1), East(1, 0), West(-1, 0);
+        /**
+         * The new x position.
+         */
+        private int xIncrement;
+        /**
+         * The new y position.
+         */
+        private int yIncrement;
+
+        /**
+         * Default constructor.
+         *
+         * @param xMotion the
+         * @param yMotion the
+         */
+        Direction(final int xMotion, final int yMotion) {
+            xIncrement = xMotion;
+            yIncrement = yMotion;
+        }
+    }
+
+    /**
      * A class which represents a board piece for the wumpus world.
      */
     public static class BoardPiece {
@@ -173,6 +199,19 @@ public class WumpusBoardHelper {
     }
 
     /**
+     * Shoots an arrow throughout the cave.
+     *
+     * @param firingPosition the location of the shooter
+     * @param dir the direction to shoot the arrow
+     */
+    public static boolean shootArrow(final PieceType firingPosition, final Direction dir) {
+//        while() {
+//
+//        }
+        return false;
+    }
+
+    /**
      * Reads a specially formatted file to representing a wumpus board.
      *
      * @param f the file
@@ -228,8 +267,7 @@ public class WumpusBoardHelper {
             for(int j = 0; j < cols; j++) {
                 final BoardPiece piece = board[i][j];
                 final String types = piece == null ? "" : piece.typesToString().toString();
-                sb.append("|")
-                        .append(StringUtils.center(String.format("  %s  ", types), 9));
+                sb.append("|").append(StringUtils.center(String.format("  %s  ", types), 9));
             }
             sb.append("|\n").append(tableHeader);
         }
