@@ -1,5 +1,9 @@
 package com.romelus_borucki.common.structures;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * Represents a logical implication structure.
  *
@@ -7,11 +11,11 @@ package com.romelus_borucki.common.structures;
  */
 public class Implication<T> {
     /**
-     *
+     * The suggested truths.
      */
-    private T implies;
+    private List<T> implies = new ArrayList<>();
     /**
-     *
+     * The operation to run on the imply.
      */
     private Operator operator;
     /**
@@ -25,19 +29,19 @@ public class Implication<T> {
      * Default constructor.
      *
      * @param operator the logical operator
-     * @param implication the implied result
+     * @param implication the implied results
      */
-    public Implication(final Operator operator, final T implication) {
+    public Implication(final Operator operator, final T ...implication) {
         this.operator = operator;
-        this.implies = implication;
+        this.implies = Arrays.asList(implication);
     }
 
     /**
-     * Getter for implication.
+     * Getter for implications.
      *
-     * @return the implication
+     * @return the implications
      */
-    public T getImplies() {
+    public List<T> getImplies() {
         return implies;
     }
 

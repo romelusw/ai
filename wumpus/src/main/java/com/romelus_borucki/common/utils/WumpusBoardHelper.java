@@ -128,8 +128,8 @@ public class WumpusBoardHelper {
          * @param type the type of piece to add
          * @return flag indicating if add successfully
          */
-        public boolean addType(final PieceType type) {
-            return types.add(type);
+        public boolean addType(final PieceType ...type) {
+            return types.addAll(Arrays.asList(type));
         }
 
         /**
@@ -138,8 +138,10 @@ public class WumpusBoardHelper {
          * @param type the type to check
          * @return flag indicating if type exists
          */
-        public boolean hasType(final PieceType type) {
-            return types.contains(type);
+        public boolean hasType(final PieceType ...type) {
+            final Set<PieceType> clone = new HashSet<>(Arrays.asList(type));
+            clone.retainAll(types);
+            return !clone.isEmpty();
         }
 
         /**
@@ -215,10 +217,10 @@ public class WumpusBoardHelper {
      * Reads a specially formatted file to representing a wumpus board.
      *
      * @param f the file
-     * @return the resolved board
+     * @return the resolved board state
      */
-    public static BoardPiece[][] readBoard(final File f) {
-        BoardPiece[][] retVal = null;
+    public static BoardState readBoard(final File f) {
+        final BoardState retVal = new BoardState(null, -1, -1);
         try {
             final Scanner s = new Scanner(f);
             int lineNum = 0;
@@ -227,7 +229,7 @@ public class WumpusBoardHelper {
                 if(lineNum == 0) {
                     final Matcher m = BOARD_DIMENSIONS_PATTERN.matcher(line);
                     if (m.find()) {
-                        retVal = new BoardPiece[Integer.parseInt(m.group(1))][Integer.parseInt(m.group(2))];
+                        retVal.setBoard(new BoardPiece[Integer.parseInt(m.group(1))][Integer.parseInt(m.group(2))]);
                     } else {
                         break;
                     }
@@ -239,11 +241,16 @@ public class WumpusBoardHelper {
                     // Add all the types
                     for(int i = 2; i < tokens.length; i++) {
                         final PieceType type = PieceType.fromString(tokens[i]);
+                        // Mark entrance
+                        if(type == PieceType.Enter) {
+                            retVal.agentXPosition = x;
+                            retVal.agentYPosition = y;
+                        }
                         if(type != null) {
                             bp.addType(type);
                         }
                     }
-                    retVal[y][x] = bp;
+                    retVal.getBoard()[y][x] = bp;
                 }
                 lineNum++;
             }
@@ -256,21 +263,58 @@ public class WumpusBoardHelper {
     /**
      * Outputs the board to stdout.
      *
-     * @param board the board
+     * @param boardState the board
      */
-    public static void printBoard(final BoardPiece[][] board) {
-        final int rows = board.length;
-        final int cols = board[0].length;
-        final String tableHeader = new String(new char[cols]).replace("\0", "+---------") + "+\n";
+    public static void printBoard(final BoardState boardState) {
+        final int rows = boardState.getBoard().length;
+        final int cols = boardState.getBoard()[0].length;
+        final String tableHeader = new String(new char[cols]).replace("\0", "+-------------") + "+\n";
         final StringBuilder sb = new StringBuilder(tableHeader);
         for(int i = rows - 1; i >= 0; i--) {
             for(int j = 0; j < cols; j++) {
-                final BoardPiece piece = board[i][j];
-                final String types = piece == null ? "" : piece.typesToString().toString();
-                sb.append("|").append(StringUtils.center(String.format("  %s  ", types), 9));
+                final BoardPiece piece = boardState.getBoard()[i][j];
+                String types = piece == null ? "" : piece.typesToString().toString();
+                int padding = 13;
+                if(j == boardState.getAgentXPosition() && i == boardState.getAgentYPosition()) {
+                    // Color ai position red
+                    types = "\033[31m"+ types +"\033[0m";
+                    padding += 9;
+                }
+                sb.append("|").append(StringUtils.center(String.format("%s", types), padding));
             }
             sb.append("|\n").append(tableHeader);
         }
         System.out.println(sb);
+    }
+
+    /**
+     * Wrapper around the board state.
+     */
+    public static class BoardState {
+        private BoardPiece[][] board;
+        private int agentXPosition;
+        private int agentYPosition;
+
+        public BoardState(final BoardPiece[][] brd, final int xPos, final int yPos) {
+            board = brd;
+            agentXPosition = xPos;
+            agentYPosition = yPos;
+        }
+
+        public BoardPiece[][] getBoard() {
+            return board;
+        }
+
+        public void setBoard(BoardPiece[][] board) {
+            this.board = board;
+        }
+
+        public int getAgentXPosition() {
+            return agentXPosition;
+        }
+
+        public int getAgentYPosition() {
+            return agentYPosition;
+        }
     }
 }
