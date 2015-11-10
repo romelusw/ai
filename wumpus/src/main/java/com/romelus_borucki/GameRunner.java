@@ -11,7 +11,8 @@ import java.io.File;
  * @author romelus
  */
 public class GameRunner {
-    private static boolean inDevMode = false;
+    private static boolean inDevMode = true;
+    private static int score, actions;
 
     /**
      * Main.
@@ -19,11 +20,10 @@ public class GameRunner {
      * @param args command line arguments
      */
     public static void main(final String... args) {
-        final int NUM_TEST_RUNS = 1;
-        int won = 0;
-        int loss = 0;
-        final File test_file = new File("/Users/romelus/Desktop/BU-Compter Science/cs664/ai/wumpus/src/main/resources/b3.txt");
+        final File test_file = new File("/Users/romelus/Desktop/BU-Compter Science/cs664/ai/wumpus/src/main/resources/b5.txt");
         final WumpusBoardHelper.BoardState gameBoard = WumpusBoardHelper.readBoard(test_file);
+        final int NUM_TEST_RUNS = 2000;
+        int won = 0, loss = 0, avgScore = 0, avgActionCount = 0;
 
         // Play several games to see general outcomes
         for (int i = 0; i < (inDevMode ? NUM_TEST_RUNS : 1); i++) {
@@ -32,33 +32,41 @@ public class GameRunner {
             } else {
                 loss++;
             }
+
+            // Tally points + Reset scoreboard
+            avgScore += (score - actions);
+            avgActionCount += actions;
+            score = 0;
+            actions = 0;
         }
 
         if (inDevMode) {
-            System.out.println(String.format("Win/lose ratio %d/%d out of %d games.", won, loss, NUM_TEST_RUNS));
+            System.out.println(String.format("Avg score: %d, Avg # of actions: %d\nWin/lose ratio %d/%d out of %d games.",
+                    avgScore / NUM_TEST_RUNS, avgActionCount / NUM_TEST_RUNS, won, loss, NUM_TEST_RUNS));
         }
     }
 
     /**
      * Plays the autonomous wumpus game.
+     *
+     * @return flag indicating if the ai has retrieved the gold successfully
      */
     public int playGame(final WumpusBoardHelper.BoardState gameBoard) {
         final InferenceAgent ai = new InferenceAgent(gameBoard.getBoard().length, gameBoard.getBoard()[0].length);
         final StringBuilder results = new StringBuilder();
-        int score = 0, actions = 0;
         int winLoss = 0; // 0: Win 1: Loss
 
-        WumpusBoardHelper.BoardPiece currLoc = gameBoard.getBoard()[gameBoard.getAgentXPosition()][gameBoard.getAgentYPosition()];
-        System.out.println("Gameboard:");
-        WumpusBoardHelper.printBoard(gameBoard);
+        WumpusBoardHelper.BoardPiece currLoc = gameBoard.getBoard()[gameBoard.getAgentYPosition()][gameBoard.getAgentXPosition()];
+//        System.out.println("Gameboard:");
+//        WumpusBoardHelper.printBoard(gameBoard);
 
         // Game-loop
         while (!ai.isDead() && !ai.hasExited()) {
             ai.tell(gameBoard.getBoard()[currLoc.getX()][currLoc.getY()]);
 
             if (inDevMode) {
-                System.out.println(String.format("Ai position: (x:%d, y:%d)", currLoc.getY() + 1, currLoc.getX() + 1));
-                WumpusBoardHelper.printBoard(new WumpusBoardHelper.BoardState(ai.getKnowledgeBase(), currLoc.getY(), currLoc.getX()));
+//                System.out.println(String.format("Ai position: (x:%d, y:%d)", currLoc.getY() + 1, currLoc.getX() + 1));
+//                WumpusBoardHelper.printBoard(new WumpusBoardHelper.BoardState(ai.getKnowledgeBase(), currLoc.getY(), currLoc.getX()));
             }
 
             final WumpusBoardHelper.BoardPiece aiPiece = ai.ask(currLoc);
@@ -88,7 +96,7 @@ public class GameRunner {
 
         if (!inDevMode) {
             WumpusBoardHelper.printBoard(new WumpusBoardHelper.BoardState(ai.getKnowledgeBase(), currLoc.getY(), currLoc.getX()));
-            System.out.println(results + String.format(" Total score: %d, Number of actions: %d", score - actions, actions));
+            System.out.println(results);
         }
 
         return winLoss;

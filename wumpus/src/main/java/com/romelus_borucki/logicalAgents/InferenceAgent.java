@@ -43,7 +43,6 @@ public class InferenceAgent {
      * Predefined implication rules.
      */
     private static Map<PieceType, Implication<PieceType>> implicationMap = new HashMap<>();
-
     /**
      * Add rules.
      */
@@ -122,7 +121,8 @@ public class InferenceAgent {
                 System.exit(1);
             }
         } else {
-            if (breadCrumbs.size() != 0) {
+            BoardPieceEnhanced entrance;
+            if (breadCrumbs.size() > 0 && !bp.hasType(PieceType.Enter)) {
                 return breadCrumbs.pop();
             } else {
                 hasExited = true;
@@ -131,7 +131,7 @@ public class InferenceAgent {
         }
 
         // Store move for exiting the cave
-        breadCrumbs.push(bp);
+        breadCrumbs.push(knowledgeBase[bp.getX()][bp.getY()]);
         return retVal;
     }
 
