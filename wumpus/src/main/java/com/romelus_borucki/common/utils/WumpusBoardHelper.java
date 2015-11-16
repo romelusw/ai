@@ -67,11 +67,11 @@ public class WumpusBoardHelper {
         /**
          * The new x position.
          */
-        private int xIncrement;
+        public int xIncrement;
         /**
          * The new y position.
          */
-        private int yIncrement;
+        public int yIncrement;
 
         /**
          * Default constructor.
@@ -198,19 +198,6 @@ public class WumpusBoardHelper {
             clone.retainAll(types);
             return !clone.isEmpty();
         }
-    }
-
-    /**
-     * Shoots an arrow throughout the cave.
-     *
-     * @param firingPosition the location of the shooter
-     * @param dir the direction to shoot the arrow
-     */
-    public static boolean shootArrow(final PieceType firingPosition, final Direction dir) {
-//        while() {
-//
-//        }
-        return false;
     }
 
     /**

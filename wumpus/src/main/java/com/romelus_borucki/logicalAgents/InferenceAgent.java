@@ -1,7 +1,9 @@
 package com.romelus_borucki.logicalAgents;
 
+import com.romelus_borucki.GameRunner;
 import com.romelus_borucki.common.structures.Implication;
 import com.romelus_borucki.common.structures.Stack;
+import com.romelus_borucki.common.utils.WumpusBoardHelper;
 import com.romelus_borucki.common.utils.WumpusBoardHelper.BoardPiece;
 import com.romelus_borucki.common.utils.WumpusBoardHelper.PieceType;
 
@@ -18,11 +20,11 @@ public class InferenceAgent {
     /**
      * Flag indicating if the agent has been eaten by the wumpus.
      */
-    public boolean eatenByWumpus;
+    private boolean eatenByWumpus;
     /**
      * Flag indicating if the agent has fell into a pit.
      */
-    public boolean fellIntoPit;
+    private boolean fellIntoPit;
     /**
      * Flag indicating that the agent has left the wumpus world safely.
      */
@@ -40,6 +42,18 @@ public class InferenceAgent {
      */
     private Stack<BoardPiece> breadCrumbs;
     /**
+     * The controlling game runner.
+     */
+    private GameRunner gameRunner;
+    /**
+     * Flag indicating whether arrow was shot.
+     */
+    private boolean hasArrow = true;
+    /**
+     * Flag indicating if the wumpus is still alive.
+     */
+    private boolean wumpusIsDead = false;
+    /**
      * Predefined implication rules.
      */
     private static Map<PieceType, Implication<PieceType>> implicationMap = new HashMap<>();
@@ -49,24 +63,27 @@ public class InferenceAgent {
     static {
         // Direct relation inferences
         implicationMap.put(PieceType.Enter, new Implication<>(Implication.Operator.NONE, PieceType.Ok));
+        implicationMap.put(PieceType.Ok, new Implication<>(Implication.Operator.NONE, PieceType.Ok));
         implicationMap.put(PieceType.Safe, new Implication<>(Implication.Operator.NONE, PieceType.Ok));
         implicationMap.put(PieceType.Breezy, new Implication<>(Implication.Operator.NONE, PieceType.QPit));
         implicationMap.put(PieceType.Stench, new Implication<>(Implication.Operator.NONE, PieceType.QWump));
 
         // Neighbor relation inferences
-        implicationMap.put(PieceType.Pit, new Implication<>(Implication.Operator.AND, PieceType.Breezy, PieceType.QPit, PieceType.QWump));
-        implicationMap.put(PieceType.Wumpus, new Implication<>(Implication.Operator.AND, PieceType.Stench, PieceType.QWump, PieceType.QPit));
+        implicationMap.put(PieceType.Pit, new Implication<>(Implication.Operator.AND, PieceType.Breezy, PieceType.QPit, PieceType.Pit, PieceType.QWump));
+        implicationMap.put(PieceType.Wumpus, new Implication<>(Implication.Operator.AND, PieceType.Stench, PieceType.QWump, PieceType.Wumpus, PieceType.QPit));
     }
 
     /**
      * Default constructor.
      *
-     * @param rows the number of rows to build up KB
-     * @param cols the number of cols to build up KB
+     * @param rows   the number of rows to build up KB
+     * @param cols   the number of cols to build up KB
+     * @param runner the game runner in control
      */
-    public InferenceAgent(final int rows, final int cols) {
+    public InferenceAgent(final int rows, final int cols, final GameRunner runner) {
         knowledgeBase = new BoardPieceEnhanced[rows][cols];
         breadCrumbs = new Stack<>(rows * cols);
+        gameRunner = runner;
     }
 
     /**
@@ -79,8 +96,7 @@ public class InferenceAgent {
         final List<BoardPieceEnhanced> neighbors = getNeighbors(bp);
         final int numNeighbors = neighbors.size();
         BoardPiece retVal = null;
-        BoardPiece backtrack = null;
-        BoardPiece wumpusDirection = null;
+        BoardPieceEnhanced backtrack = null;
 
         // End game scenarios
         if (bp.hasType(PieceType.Wumpus)) {
@@ -98,35 +114,35 @@ public class InferenceAgent {
             for (int i = 0; i < numNeighbors; i++) {
                 // Allow for random selection from neighbors
                 final BoardPieceEnhanced neighbor = neighbors.get(new Random().nextInt(neighbors.size()));
+
+                // Clear types leading to wumpus if already dead
+                clearWumpusStates(neighbor);
                 final boolean isSafePiece = neighbor.isSafe();
-                if (isSafePiece && neighbor.getVisitCount() == 0) {
+
+                if (isSafePiece && neighbor.getVisitCount() == 0) { // Safe + Unvisited
                     retVal = neighbor;
                     break;
-                } else if (isSafePiece && neighbor.getVisitCount() > 0) {
+                } else if (isSafePiece) { // Safe + Least visited
+                    if (backtrack == null) {
+                        backtrack = neighbor;
+                    } else {
+                        backtrack = backtrack.getVisitCount() > neighbor.getVisitCount() ? neighbor : backtrack;
+                    }
+                } else if(neighbor.hasType(PieceType.Breezy)) { // If all else fails walk into the breeze
                     backtrack = neighbor;
-                } else if (neighbor.hasType(PieceType.Stench)) {
-                    wumpusDirection = neighbor;
                 }
+
                 neighbors.remove(neighbor);
             }
 
             // Move backwards if frontier is uncertain
-            if (retVal == null) {
-                retVal = backtrack;
-            }
-
-            // Arrow scenario
-            if (retVal == null && backtrack == null) {
-                System.out.println("Arrow shot within row/col: " + wumpusDirection.getX() + "," + wumpusDirection.getY());
-                System.exit(1);
-            }
+            retVal = retVal == null ? backtrack : retVal;
         } else {
-            BoardPieceEnhanced entrance;
-            if (breadCrumbs.size() > 0 && !bp.hasType(PieceType.Enter)) {
-                return breadCrumbs.pop();
-            } else {
+            if (bp.hasType(PieceType.Enter)) {
                 hasExited = true;
                 return bp;
+            } else {
+                return breadCrumbs.pop();
             }
         }
 
@@ -147,38 +163,59 @@ public class InferenceAgent {
             bpe = knowledgeBase[bp.getX()][bp.getY()] = new BoardPieceEnhanced(bp.getX(), bp.getY());
         }
 
-        // Update the KB with the type found from the game board
-        bpe.setType(bp.getTypes().isEmpty() ? Arrays.asList(PieceType.Safe) : bp.getTypes());
-
         // Skip those we have already confirmed
-        if (bpe.isGameEnding() || bpe.isConfirmed() && bpe.getVisitCount() > 1) {
+        if (hasGold || bpe.isGameEnding()) {
             return;
         }
 
-        // TODO: Improve inaccurate inferencing (eg, piece w/two neighbors which are breezy are treated as pits)
-        // Inferences on neighbors
-        for (final BoardPieceEnhanced neighbor : getNeighbors(bp)) {
-            if (neighbor.getTypes().isEmpty()) {
-                neighbor.addType((PieceType[]) bpe.getImplication().getImplies().toArray());
-            } else if (neighbor.hasType(PieceType.QPit) || neighbor.hasType(PieceType.QWump)) {
-                neighbor.addType((PieceType[]) bpe.getImplication().getImplies().toArray());
-                final Set<Map.Entry<PieceType, PieceType>> assumedTypes = assumeTypes(neighbor.getTypes()).entrySet();
-                for (final Map.Entry<PieceType, PieceType> type : assumedTypes) {
-                    final Set<PieceType> neighborTypes = neighbor.getTypes();
-                    if (runInference(implicationMap.get(type.getValue()), getNeighbors(neighbor))) {
-                        // Confirm
-                        neighbor.addType(type.getValue());
-                    } else {
-                        // Negate
-                        if (neighborTypes.size() <= 1) { // A piece that is "OK" should only contain one type
-                            neighborTypes.add(PieceType.Ok);
+        // Tally visit
+        bpe.addVisit();
+
+        // Update the KB with the type found from the game board if we do not know about it
+        bpe.setType(bp.getTypes().isEmpty() ? Arrays.asList(PieceType.Safe) : bp.getTypes());
+
+        // Clear types leading to wumpus if already dead
+        clearWumpusStates(bpe);
+
+        if (!hasGold && !bpe.hasType(PieceType.Gold)) {
+            // TODO: Improve inaccurate inferencing (eg, piece w/two neighbors which are breezy are treated as pits)
+            // Inferences on neighbors
+            for (final BoardPieceEnhanced neighbor : getNeighbors(bp)) {
+                // Clear types leading to wumpus if already dead
+                clearWumpusStates(neighbor);
+
+                if (neighbor.getTypes().isEmpty()) {
+                    neighbor.addType((PieceType[]) bpe.getImplication().getImplies().toArray());
+                } else if (neighbor.hasType(PieceType.QPit, PieceType.QWump)) {
+                    neighbor.addType((PieceType[]) bpe.getImplication().getImplies().toArray());
+                    final Set<Map.Entry<PieceType, PieceType>> assumedTypes = assumeTypes(neighbor.getTypes()).entrySet();
+                    for (final Map.Entry<PieceType, PieceType> type : assumedTypes) {
+                        final PieceType value = type.getValue();
+                        if (runInference(implicationMap.get(value), getNeighbors(neighbor))) {
+                            // Confirm
+                            neighbor.getTypes().clear();
+                            neighbor.addType(value);
+
+                            // Naively shoot the wumpus as soon as possible
+                            if (hasArrow && value.equals(PieceType.Wumpus)) {
+                                if (gameRunner.shootArrow(bp, optimalDirection(bp, neighbor))) {
+                                    neighbor.getTypes().remove(PieceType.Wumpus);
+                                    neighbor.addType(PieceType.Safe);
+                                    wumpusIsDead = true;
+                                }
+                                hasArrow = false;
+                            }
+                        } else {
+                            neighbor.getTypes().remove(type.getKey());
+                            if(neighbor.getTypes().isEmpty()) {
+                                neighbor.addType(PieceType.Ok);
+                            }
                         }
+                        neighbor.getTypes().remove(type.getKey());
                     }
-                    neighborTypes.remove(type.getKey());
                 }
             }
         }
-        bpe.addVisit();
     }
 
     /**
@@ -187,7 +224,7 @@ public class InferenceAgent {
      * @param types the questionable types
      * @return the assumed opposites
      */
-    public Map<PieceType, PieceType> assumeTypes(final Set<PieceType> types) {
+    private Map<PieceType, PieceType> assumeTypes(final Set<PieceType> types) {
         final Map<PieceType, PieceType> retVal = new HashMap<>(types.size());
         for (final PieceType type : types) {
             switch (type) {
@@ -209,10 +246,10 @@ public class InferenceAgent {
      * @param neighbors the items to test against
      * @return flag indicating if inference passed
      */
-    public boolean runInference(final Implication<PieceType> implies, final List<BoardPieceEnhanced> neighbors) {
+    private boolean runInference(final Implication<PieceType> implies, final List<BoardPieceEnhanced> neighbors) {
         boolean retVal;
         final Stream nStream = neighbors.stream();
-        final Predicate<BoardPieceEnhanced> predicate = n -> n.getTypes().isEmpty() || n.hasType(PieceType.Ok) || n.hasType((PieceType[]) implies.getImplies().toArray());
+        final Predicate<BoardPieceEnhanced> predicate = n -> n.getTypes().isEmpty() || n.hasType((PieceType[]) implies.getImplies().toArray());
         if (implies.getOperator().equals(Implication.Operator.AND)) {
             retVal = nStream.allMatch(predicate);
         } else {
@@ -240,6 +277,15 @@ public class InferenceAgent {
     }
 
     /**
+     * Getter for eatenByWumpus.
+     *
+     * @return eatenByWumpus
+     */
+    public boolean isEatenByWumpus() {
+        return eatenByWumpus;
+    }
+
+    /**
      * Getter for hasGold.
      *
      * @return hasGold
@@ -259,32 +305,35 @@ public class InferenceAgent {
 
         // North
         int northX = bp.getX(), northY = bp.getY() + 1;
-        if(withinWidth(northX) && withinHeight(northY)) {
-            if(knowledgeBase[northX][northY] == null) {
+        if (withinWidth(northX) && withinHeight(northY)) {
+            if (knowledgeBase[northX][northY] == null) {
                 knowledgeBase[northX][northY] = new BoardPieceEnhanced(northX, northY);
             }
             neighbors.add(knowledgeBase[northX][northY]);
         }
         // South
-        northX = bp.getX(); northY = bp.getY() - 1;
-        if(withinWidth(northX) && withinHeight(northY)) {
-            if(knowledgeBase[northX][northY] == null) {
+        northX = bp.getX();
+        northY = bp.getY() - 1;
+        if (withinWidth(northX) && withinHeight(northY)) {
+            if (knowledgeBase[northX][northY] == null) {
                 knowledgeBase[northX][northY] = new BoardPieceEnhanced(northX, northY);
             }
             neighbors.add(knowledgeBase[northX][northY]);
         }
         // East
-        northX = bp.getX() + 1; northY = bp.getY();
-        if(withinWidth(northX) && withinHeight(northY)) {
-            if(knowledgeBase[northX][northY] == null) {
+        northX = bp.getX() + 1;
+        northY = bp.getY();
+        if (withinWidth(northX) && withinHeight(northY)) {
+            if (knowledgeBase[northX][northY] == null) {
                 knowledgeBase[northX][northY] = new BoardPieceEnhanced(northX, northY);
             }
             neighbors.add(knowledgeBase[northX][northY]);
         }
         // West
-        northX = bp.getX() - 1; northY = bp.getY();
-        if(withinWidth(northX) && withinHeight(northY)) {
-            if(knowledgeBase[northX][northY] == null) {
+        northX = bp.getX() - 1;
+        northY = bp.getY();
+        if (withinWidth(northX) && withinHeight(northY)) {
+            if (knowledgeBase[northX][northY] == null) {
                 knowledgeBase[northX][northY] = new BoardPieceEnhanced(northX, northY);
             }
             neighbors.add(knowledgeBase[northX][northY]);
@@ -321,6 +370,43 @@ public class InferenceAgent {
     private boolean withinHeight(final int y) {
         final int cols = knowledgeBase[0].length;
         return y >= 0 && y < cols;
+    }
+
+    /**
+     * Removes traces of the wumpus, if it has died.
+     *
+     * @param bp the piece to scrub
+     */
+    private void clearWumpusStates(final BoardPiece bp) {
+        if (wumpusIsDead && bp.hasType(PieceType.Stench, PieceType.QWump, PieceType.Wumpus)) {
+            bp.getTypes().remove(PieceType.Stench);
+            bp.getTypes().remove(PieceType.QWump);
+            bp.getTypes().remove(PieceType.Wumpus);
+            if(bp.getTypes().isEmpty()) {
+                bp.addType(PieceType.Safe);
+            }
+        }
+    }
+
+    /**
+     * Determine the direction necessary to face a given piece.
+     *
+     * @param start the origin piece
+     * @param end   the destination piece
+     * @return the direction in order to reach the end piece
+     */
+    private WumpusBoardHelper.Direction optimalDirection(final BoardPiece start, final BoardPiece end) {
+        WumpusBoardHelper.Direction retVal = null;
+        if (end.getY() > start.getY() && start.getX() == end.getX()) { // EAST
+            retVal = WumpusBoardHelper.Direction.East;
+        } else if (end.getY() < start.getY() && start.getX() == end.getX()) { // WEST
+            retVal = WumpusBoardHelper.Direction.West;
+        } else if (end.getX() > start.getX() && end.getY() == start.getY()) { // NORTH
+            retVal = WumpusBoardHelper.Direction.North;
+        } else {
+            retVal = WumpusBoardHelper.Direction.South;
+        }
+        return retVal;
     }
 
     /**
