@@ -7,9 +7,14 @@ import com.romelus_borucki.common.utils.WumpusBoardHelper;
 import com.romelus_borucki.common.utils.WumpusBoardHelper.BoardPiece;
 import com.romelus_borucki.common.utils.WumpusBoardHelper.PieceType;
 
-import java.util.*;
-import java.util.function.Predicate;
-import java.util.stream.Stream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
 
 /**
  * An agent capable of inferring facts from its wumpus world.
@@ -69,8 +74,8 @@ public class InferenceAgent {
         implicationMap.put(PieceType.Stench, new Implication<>(Implication.Operator.NONE, PieceType.QWump));
 
         // Neighbor relation inferences
-        implicationMap.put(PieceType.Pit, new Implication<>(Implication.Operator.AND, PieceType.Breezy, PieceType.QPit, PieceType.Pit, PieceType.QWump));
-        implicationMap.put(PieceType.Wumpus, new Implication<>(Implication.Operator.AND, PieceType.Stench, PieceType.QWump, PieceType.Wumpus, PieceType.QPit));
+        implicationMap.put(PieceType.Pit, new Implication<>(Implication.Operator.AND, PieceType.Breezy));
+        implicationMap.put(PieceType.Wumpus, new Implication<>(Implication.Operator.AND, PieceType.Stench));
     }
 
     /**
@@ -104,6 +109,7 @@ public class InferenceAgent {
             return bp;
         } else if (bp.hasType(PieceType.Pit)) {
             fellIntoPit = true;
+            System.exit(1);
             return bp;
         } else if (bp.hasType(PieceType.Gold)) {
             hasGold = true;
@@ -117,21 +123,17 @@ public class InferenceAgent {
 
                 // Clear types leading to wumpus if already dead
                 clearWumpusStates(neighbor);
-                final boolean isSafePiece = neighbor.isSafe();
 
-                if (isSafePiece && neighbor.getVisitCount() == 0) { // Safe + Unvisited
-                    retVal = neighbor;
-                    break;
-                } else if (isSafePiece) { // Safe + Least visited
-                    if (backtrack == null) {
-                        backtrack = neighbor;
+                if (neighbor.isSafe()) {
+                    if(neighbor.getVisitCount() == 0) { // Safe + Least visited
+                        retVal = neighbor;
+                        break;
                     } else {
-                        backtrack = backtrack.getVisitCount() > neighbor.getVisitCount() ? neighbor : backtrack;
+                        backtrack = (backtrack == null || backtrack.getVisitCount() > neighbor.getVisitCount()) ? neighbor : backtrack;
                     }
                 } else if(neighbor.hasType(PieceType.Breezy)) { // If all else fails walk into the breeze
                     backtrack = neighbor;
                 }
-
                 neighbors.remove(neighbor);
             }
 
@@ -190,28 +192,28 @@ public class InferenceAgent {
                     neighbor.addType((PieceType[]) bpe.getImplication().getImplies().toArray());
                     final Set<Map.Entry<PieceType, PieceType>> assumedTypes = assumeTypes(neighbor.getTypes()).entrySet();
                     for (final Map.Entry<PieceType, PieceType> type : assumedTypes) {
-                        final PieceType value = type.getValue();
-                        if (runInference(implicationMap.get(value), getNeighbors(neighbor))) {
-                            // Confirm
-                            neighbor.getTypes().clear();
-                            neighbor.addType(value);
+                        final List<BoardPieceEnhanced> neighbors = getNeighbors(neighbor);
+                        // Do we have enough information about this piece to do inferencing?
+                        if(neighbors.stream().filter(n -> !n.getTypes().isEmpty() && n.hasType((PieceType[])implicationMap.get(type.getValue()).getImplies().toArray())).count() > 0) {
+                            if (runInference(implicationMap.get(type.getValue()), neighbors)) {
+                                // Confirm
+                                neighbor.addType(type.getValue());
 
-                            // Naively shoot the wumpus as soon as possible
-                            if (hasArrow && value.equals(PieceType.Wumpus)) {
-                                if (gameRunner.shootArrow(bp, optimalDirection(bp, neighbor))) {
-                                    neighbor.getTypes().remove(PieceType.Wumpus);
-                                    neighbor.addType(PieceType.Safe);
-                                    wumpusIsDead = true;
+                                // Naively shoot the wumpus as soon as possible
+                                if (hasArrow && type.getValue().equals(PieceType.Wumpus)) {
+                                    if (gameRunner.shootArrow(bp, optimalDirection(bp, neighbor))) {
+                                        neighbor.getTypes().clear();
+                                        neighbor.addType(PieceType.Safe);
+                                        wumpusIsDead = true;
+                                    }
+                                    hasArrow = false;
                                 }
-                                hasArrow = false;
                             }
-                        } else {
                             neighbor.getTypes().remove(type.getKey());
                             if(neighbor.getTypes().isEmpty()) {
                                 neighbor.addType(PieceType.Ok);
                             }
                         }
-                        neighbor.getTypes().remove(type.getKey());
                     }
                 }
             }
@@ -247,15 +249,7 @@ public class InferenceAgent {
      * @return flag indicating if inference passed
      */
     private boolean runInference(final Implication<PieceType> implies, final List<BoardPieceEnhanced> neighbors) {
-        boolean retVal;
-        final Stream nStream = neighbors.stream();
-        final Predicate<BoardPieceEnhanced> predicate = n -> n.getTypes().isEmpty() || n.hasType((PieceType[]) implies.getImplies().toArray());
-        if (implies.getOperator().equals(Implication.Operator.AND)) {
-            retVal = nStream.allMatch(predicate);
-        } else {
-            retVal = nStream.anyMatch(predicate);
-        }
-        return retVal;
+        return neighbors.stream().filter(n -> !n.getTypes().isEmpty() && n.hasType((PieceType[]) implies.getImplies().toArray())).count() > 1;
     }
 
     /**

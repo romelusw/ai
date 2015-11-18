@@ -23,8 +23,8 @@ public class GameRunner {
      * @param args command line arguments
      */
     public static void main(final String... args) {
-        final File test_file = new File("/Users/romelus/Desktop/BU-Compter Science/cs664/ai/wumpus/src/main/resources/b2.txt");
-        final int NUM_TEST_RUNS = 1;
+        final File test_file = new File("/Users/romelus/Desktop/BU-Compter Science/cs664/ai/wumpus/src/main/resources/b3.txt");
+        final int NUM_TEST_RUNS = 1000;
         int won = 0, loss = 0, avgScore = 0, avgActionCount = 0;
 
         // Play several games to see general outcomes
@@ -107,7 +107,7 @@ public class GameRunner {
         }
 
         if (!inDevMode) {
-            WumpusBoardHelper.printBoard(new BoardState(agent.getKnowledgeBase(), currLoc.getY(), currLoc.getX()));
+//            WumpusBoardHelper.printBoard(new BoardState(agent.getKnowledgeBase(), currLoc.getY(), currLoc.getX()));
 //            System.out.println(results);
         }
 
