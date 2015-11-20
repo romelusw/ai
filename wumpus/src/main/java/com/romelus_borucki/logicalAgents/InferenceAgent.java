@@ -183,9 +183,6 @@ public class InferenceAgent {
             // TODO: Improve inaccurate inferencing (eg, piece w/two neighbors which are breezy are treated as pits)
             // Inferences on neighbors
             for (final BoardPieceEnhanced neighbor : getNeighbors(bp)) {
-                // Clear types leading to wumpus if already dead
-                clearWumpusStates(neighbor);
-
                 if (neighbor.getTypes().isEmpty()) {
                     neighbor.addType((PieceType[]) bpe.getImplication().getImplies().toArray());
                 } else if (neighbor.hasType(PieceType.QPit, PieceType.QWump)) {
@@ -194,7 +191,8 @@ public class InferenceAgent {
                     for (final Map.Entry<PieceType, PieceType> type : assumedTypes) {
                         final List<BoardPieceEnhanced> neighbors = getNeighbors(neighbor);
                         // Do we have enough information about this piece to do inferencing?
-                        if(neighbors.stream().filter(n -> !n.getTypes().isEmpty() && n.hasType((PieceType[])implicationMap.get(type.getValue()).getImplies().toArray())).count() > 0) {
+                        if(neighbors.stream().filter(n -> !n.getTypes().isEmpty() &&
+                                !n.hasType(PieceType.Ok, PieceType.QPit, PieceType.QWump, PieceType.Pit)).count() > 1) {
                             if (runInference(implicationMap.get(type.getValue()), neighbors)) {
                                 // Confirm
                                 neighbor.addType(type.getValue());
@@ -372,12 +370,12 @@ public class InferenceAgent {
      * @param bp the piece to scrub
      */
     private void clearWumpusStates(final BoardPiece bp) {
-        if (wumpusIsDead && bp.hasType(PieceType.Stench, PieceType.QWump, PieceType.Wumpus)) {
+        if(wumpusIsDead) {
             bp.getTypes().remove(PieceType.Stench);
             bp.getTypes().remove(PieceType.QWump);
             bp.getTypes().remove(PieceType.Wumpus);
             if(bp.getTypes().isEmpty()) {
-                bp.addType(PieceType.Safe);
+                bp.addType(PieceType.Ok);
             }
         }
     }

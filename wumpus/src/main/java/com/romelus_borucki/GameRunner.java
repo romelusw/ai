@@ -23,7 +23,7 @@ public class GameRunner {
      * @param args command line arguments
      */
     public static void main(final String... args) {
-        final File test_file = new File("/Users/romelus/Desktop/BU-Compter Science/cs664/ai/wumpus/src/main/resources/b3.txt");
+        final File test_file = new File("/Users/romelus/Desktop/BU-Compter Science/cs664/ai/wumpus/src/main/resources/b8.txt");
         final int NUM_TEST_RUNS = 1000;
         int won = 0, loss = 0, avgScore = 0, avgActionCount = 0;
 
