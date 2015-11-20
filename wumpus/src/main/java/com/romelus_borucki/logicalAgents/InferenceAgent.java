@@ -121,9 +121,6 @@ public class InferenceAgent {
                 // Allow for random selection from neighbors
                 final BoardPieceEnhanced neighbor = neighbors.get(new Random().nextInt(neighbors.size()));
 
-                // Clear types leading to wumpus if already dead
-                clearWumpusStates(neighbor);
-
                 if (neighbor.isSafe()) {
                     if(neighbor.getVisitCount() == 0) { // Safe + Least visited
                         retVal = neighbor;
@@ -165,7 +162,7 @@ public class InferenceAgent {
             bpe = knowledgeBase[bp.getX()][bp.getY()] = new BoardPieceEnhanced(bp.getX(), bp.getY());
         }
 
-        // Skip those we have already confirmed
+        // Skip end game pieces
         if (hasGold || bpe.isGameEnding()) {
             return;
         }

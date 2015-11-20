@@ -6,6 +6,8 @@ import com.romelus_borucki.common.utils.WumpusBoardHelper.BoardState;
 import com.romelus_borucki.logicalAgents.InferenceAgent;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.util.Scanner;
 
 /**
  * Object which starts/ends the Wumpus game.
@@ -14,7 +16,6 @@ import java.io.File;
  */
 public class GameRunner {
     public BoardState boardState;
-    private static boolean inDevMode = true;
     private static int score, actions;
 
     /**
@@ -23,33 +24,27 @@ public class GameRunner {
      * @param args command line arguments
      */
     public static void main(final String... args) {
-        final File test_file = new File("/Users/romelus/Desktop/BU-Compter Science/cs664/ai/wumpus/src/main/resources/b8.txt");
-        final int NUM_TEST_RUNS = 1000;
-        int won = 0, loss = 0, avgScore = 0, avgActionCount = 0;
+        boolean isPlaying = true;
+        final Scanner scanner = new Scanner(System.in);
+        while (isPlaying) {
+            System.out.println(GameRunner.usage());
 
-        // Play several games to see general outcomes
-        for (int i = 0; i < (inDevMode ? NUM_TEST_RUNS : 1); i++) {
-            final BoardState gameBoard = WumpusBoardHelper.readBoard(test_file);
-            final GameRunner runner = new GameRunner(gameBoard);
-            final InferenceAgent ai = new InferenceAgent(gameBoard.getBoard().length, gameBoard.getBoard()[0].length, runner);
-            if (runner.playGame(ai) == 0) {
-                won++;
+            final String line = scanner.nextLine();
+            if (line.equalsIgnoreCase("Q")) {
+                isPlaying = false;
+                System.exit(0);
             } else {
-                loss++;
+                final File boardFile = new File(line);
+                if (boardFile.exists()) {
+                    final BoardState gameBoard = WumpusBoardHelper.readBoard(boardFile);
+                    final GameRunner runner = new GameRunner(gameBoard);
+                    final InferenceAgent ai = new InferenceAgent(gameBoard.getBoard().length, gameBoard.getBoard()[0].length, runner);
+                    runner.playGame(ai);
+                    System.out.println(String.format("Score: %d, # of actions: %d", score - actions, actions));
+                }
             }
-
-            // Tally points + Reset scoreboard
-            avgScore += (score - actions);
-            avgActionCount += actions;
             score = 0;
-            actions = 0;
-        }
-
-        if (inDevMode) {
-            System.out.println(String.format("Avg score: %d, Avg # of actions: %d\nWin/lose ratio %d/%d out of %d games.",
-                    avgScore / NUM_TEST_RUNS, avgActionCount / NUM_TEST_RUNS, won, loss, NUM_TEST_RUNS));
-        } else {
-            System.out.println(String.format("Score: %d, # of actions: %d", avgScore, avgActionCount));
+            actions = 0; // Reset score + action count
         }
     }
 
@@ -79,10 +74,8 @@ public class GameRunner {
         while (!agent.isDead() && !agent.hasExited()) {
             agent.tell(boardState.getBoard()[currLoc.getX()][currLoc.getY()]);
 
-            if(inDevMode) {
-                System.out.println(String.format("Ai position: (x:%d, y:%d)", currLoc.getY() + 1, currLoc.getX() + 1));
-                WumpusBoardHelper.printBoard(new BoardState(agent.getKnowledgeBase(), currLoc.getY(), currLoc.getX()));
-            }
+            System.out.println(String.format("Ai position: (x:%d, y:%d)", currLoc.getY() + 1, currLoc.getX() + 1));
+            WumpusBoardHelper.printBoard(new BoardState(agent.getKnowledgeBase(), currLoc.getY(), currLoc.getX()));
 
             final BoardPiece aiPiece = agent.ask(currLoc);
             currLoc = boardState.getBoard()[aiPiece.getX()][aiPiece.getY()];
@@ -106,11 +99,7 @@ public class GameRunner {
             }
         }
 
-        if (!inDevMode) {
-//            WumpusBoardHelper.printBoard(new BoardState(agent.getKnowledgeBase(), currLoc.getY(), currLoc.getX()));
-//            System.out.println(results);
-        }
-
+        System.out.println(results);
         return winLoss;
     }
 
@@ -118,21 +107,21 @@ public class GameRunner {
      * Shoots an arrow throughout the cave.
      *
      * @param firingPosition the location of the shooter
-     * @param dir the direction to shoot the arrow
+     * @param dir            the direction to shoot the arrow
      * @return flag indicating if the wumpus was killed
      */
     public boolean shootArrow(final BoardPiece firingPosition, final WumpusBoardHelper.Direction dir) {
         BoardPiece currLoc = firingPosition;
 
-        while(currLoc != null) {
-            if(currLoc.hasType(WumpusBoardHelper.PieceType.Wumpus)) {
+        while (currLoc != null) {
+            if (currLoc.hasType(WumpusBoardHelper.PieceType.Wumpus)) {
                 currLoc.getTypes().clear();
                 currLoc.addType(WumpusBoardHelper.PieceType.Safe);
                 break;
             } else {
                 try {
                     currLoc = boardState.getBoard()[currLoc.getX() + dir.yIncrement][currLoc.getY() + dir.xIncrement];
-                } catch(final ArrayIndexOutOfBoundsException aioe) {
+                } catch (final ArrayIndexOutOfBoundsException aioe) {
                     currLoc = null;
                 }
             }
@@ -141,5 +130,11 @@ public class GameRunner {
 
         System.out.println((currLoc != null ? "Wumpus is dead!\n" : "Arrow ricocheted off the cave walls\n"));
         return currLoc != null;
+    }
+
+    private static String usage() {
+        final StringBuilder sb = new StringBuilder();
+        sb.append("Welcome to the wumpus game. Please enter the path to the board file:");
+        return sb.toString();
     }
 }
