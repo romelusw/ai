@@ -1,4 +1,61 @@
 <!Doctype html>
 <html>
-    <h1>Hello World</h1>
+    <head>
+        <link href="css/styles.css" media="all" rel="stylesheet" type="text/css">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+        <script type="text/javascript" src="js/ternarySearchTree.js"></script>
+        <script type="text/javascript" src="js/wordGramMap.js"></script>
+    </head>
+
+    <body>
+        <textarea id="userCorpus" rows="4" cols="50"></textarea>
+        <button id="corpusUpload">load</button>
+        <form>
+            <input type="text" id="query" autocomplete="off" placeholder="Search">
+            <ul id="query_autocomplete_results">
+                <li>Jones</li>
+            </ul>
+        </form>
+        <script type="text/javascript">
+            var tst = new TST();
+            var bigram = new GramHashMap();
+
+            // Handlers
+            $("#corpusUpload").click(function() {
+                wordGrams($("#userCorpus").val(), 2).forEach(function(i, k) {
+                    tst.add(i[0]);
+                    bigram.add(i[0], i[1]);
+                });
+                console.log("Corpus loaded");
+                $("#userCorpus").val("");
+            });
+
+            $("#query").keyup(function() {
+                var query = $(this).val();
+                if(query.length) {
+                    console.log("tree found:", tst.get(query));
+                    console.log("gram found:", bigram.get(query));
+                }
+            });
+
+            function wordGrams(sentence, numWords) {
+                var result = new Array();
+                var words = sentence.trim().split(" ");
+                for(var i = 0; i < words.length - numWords; i++) {
+                    for(var j = 0; j < numWords; j++) {
+                        if(result[i] === undefined) {
+                            result[i] = new Array();
+                        }
+                        result[i].push(normalize(words[i + j]));
+                    }
+                }
+                return result;
+            }
+
+            function normalize(word) {
+                // TODO: Handle stop words and simplify possesive words
+                return word.toLowerCase().replace(/[^a-zA-Z]+/, "");
+            }
+        </script>
+    </body>
 </html>
