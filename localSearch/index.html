@@ -70,7 +70,7 @@
 
             function wordGrams(sentence, numWords) {
                 var result = new Array();
-                var words = sentence.toLowerCase().replace(/[^a-zA-Z ]/g, "").split(" ");
+                var words = sentence.toLowerCase().replace(/[^a-zA-Z ]/g, " ").split(" ");
                 for(var i = 0; i < words.length - numWords; i++) {
                     for(var j = 0; j < numWords; j++) {
                         if(result[i] === undefined) {
