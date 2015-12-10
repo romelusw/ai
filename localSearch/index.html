@@ -60,11 +60,13 @@
             function populateList(prefix, data) {
                 $("#query_autocomplete_results").empty();
 
-                if(prefix !== undefined && data !== undefined) {
+                if(prefix && data) {
                     data.forEach(function(i, k) {
-                        var lastCharacterLoc = i.word.indexOf(prefix[prefix.length - 1]);
-                        $("#query_autocomplete_results").append("<li><span class=\"emp\">" + i.word.slice(0, lastCharacterLoc + 1) + "</span>" + i.word.slice(lastCharacterLoc + 1, i.word.length) + "</li>");
-                        });
+                        if(!i.word == "") {
+                            var lastCharacterLoc = i.word.indexOf(prefix[prefix.length - 1]);
+                            $("#query_autocomplete_results").append("<li><span class=\"emp\">" + i.word.slice(0, lastCharacterLoc + 1) + "</span>" + i.word.slice(lastCharacterLoc + 1, i.word.length) + "</li>");
+                        }
+                    });
                 }
             }
 
