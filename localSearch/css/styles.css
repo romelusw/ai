@@ -76,7 +76,6 @@ textarea:focus, input:focus{
 }
 
 #query_autocomplete_results li:hover {
-  cursor: pointer;
   background-color:#f2f2f2;
 }
 

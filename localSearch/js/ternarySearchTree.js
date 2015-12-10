@@ -22,6 +22,10 @@ function TST() {
         var j = 3;
     }
 
+    this.size = function() {
+        return size;
+    }
+
     function get(currNode, prefix, index) {
         var charAtIndex = prefix.charCodeAt(index);
         var retVal = currNode;

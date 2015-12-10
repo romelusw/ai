@@ -11,7 +11,7 @@
         <div id="wrapper">
             <h2>Contextual Search (sort of)</h2>
             <div id="corpusUpload">
-                <textarea id="userCorpus" placeholder="Enter corpus data here..."></textarea>
+                <textarea id="userCorpus" placeholder="Enter corpus data here ..."></textarea>
                 <button style="float:left">Load Corpus</button>
                 <p id="stats"></p>
                 <div class="clear"></div>
@@ -44,7 +44,7 @@
 
             $("#query").keyup(function(evt) {
                 var query = $(this).val().split(" ");
-                if(tst !== undefined || bigram !== undefined || tst.size > 0 || bigram.size() > 0) {
+                if(tst && bigram && tst.size() > 0 && bigram.size() > 0) {
                     var last = query[query.length - 1];
                     var prev = query[query.length - 2];
                     if(query.length > 1 && evt.keyCode == 32) {
