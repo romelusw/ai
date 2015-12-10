@@ -76,4 +76,55 @@ function TST() {
         this.middle = undefined;
         this.right = undefined;
     }
+
+    // public String toString() {
+    //     final StringBuilder sb = new StringBuilder();
+    //     final String[] stack = new String[1000];
+    //     Arrays.fill(stack, "");
+    //     toString(root, stack, 0);
+    //     for(int i = 0; i < stack.length; i++) {
+    //         if(stack[i].isEmpty()) continue;
+    //         sb.append(stack[i]).append("\n");
+    //     }
+    //     return sb.toString();
+    // }
+
+    // private void toString(final Node currNode, final String[] stack, int depth) {
+    //     if(currNode == null) return;
+    //     stack[depth] += String.format("  %s", currNode.getCharacter());
+    //     // Left
+    //     if(currNode.getLeft() == null) {
+    //         stack[depth + 1] += "↙ ";
+    //     } else {
+    //         for(int i = depth; i >= 0; i--) {
+    //             stack[i] = new String(new char[depth]).replace("\0", " ") + stack[i];
+    //         }
+    //         stack[depth + 1] += "/ ";
+    //     }
+    //     toString(currNode.getLeft(), stack, depth + 2);
+
+    //     // Middle
+    //     if(currNode.getMiddle() == null) {
+    //         stack[depth + 1] += "⊥";
+    //     } else {
+    //         toString(currNode.getMiddle(), stack, depth + 2);
+    //         if(currNode.getLeft() != null || currNode.getRight() != null) {
+    //             for(int i = depth ; i >= depth; i--) {
+    //                 stack[i] = new String(new char[depth]).replace("\0", " ") + stack[i];
+    //             }
+    //         }
+    //         stack[depth + 1] += "|";
+    //     }
+
+    //     // Right
+    //     if(currNode.getRight() == null) {
+    //         stack[depth + 1] += " ↘";
+    //     } else {
+    //         stack[depth + 1] += " \\";
+    //         for(int i = depth; i >= 0; i--) {
+    //             stack[i] = new String(new char[depth]).replace("\0", " ") + stack[i];
+    //         }
+    //     }
+    //     toString(currNode.getRight(), stack, depth + 2);
+    // }
 }

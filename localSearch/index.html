@@ -9,9 +9,14 @@
 
     <body>
         <div id="wrapper">
-            <textarea id="userCorpus" rows="4" cols="50"></textarea>
-            <button id="corpusUpload">load</button>
-            <form>
+            <h2>Contextual Search (sort of)</h2>
+            <div id="corpusUpload">
+                <textarea id="userCorpus" placeholder="Enter corpus data here..."></textarea>
+                <button style="float:left">Load Corpus</button>
+                <p id="stats"></p>
+                <div class="clear"></div>
+            </div>
+            <form id="queryForm">
                 <input type="text" id="query" autocomplete="off" placeholder="Search">
                 <ul id="query_autocomplete_results">
                     <div class="clear"></div>
@@ -24,16 +29,17 @@
             var bigram;
 
             // Handlers
-            $("#corpusUpload").click(function() {
+            $("#corpusUpload button").click(function() {
                 // Reclaim memory
                 tst = new TST();
                 bigram = new GramHashMap();
+                var start = new Date();
 
                 wordGrams($("#userCorpus").val(), 2).forEach(function(i, k) {
                     tst.add(i[0]);
                     bigram.add(i[0], i[1]);
                 });
-                console.log("Corpus loaded");
+                $("#stats").html("Ngram + TST generated in <span class=\"emp\">" + (new Date() - start) + "ms</span>.");
             });
 
             $("#query").keyup(function(evt) {
