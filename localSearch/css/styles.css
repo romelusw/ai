@@ -56,6 +56,10 @@ textarea:focus, input:focus{
   background-color:#f2f2f2;
 }
 
+.clear {
+  clear: both;
+}
+
 .emp {
   color: #4495d4;
   font-weight: bold;
