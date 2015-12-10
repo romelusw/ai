@@ -8,39 +8,61 @@
     </head>
 
     <body>
-        <textarea id="userCorpus" rows="4" cols="50"></textarea>
-        <button id="corpusUpload">load</button>
-        <form>
-            <input type="text" id="query" autocomplete="off" placeholder="Search">
-            <ul id="query_autocomplete_results">
-                <li>Jones</li>
-            </ul>
-        </form>
+        <div id="wrapper">
+            <textarea id="userCorpus" rows="4" cols="50"></textarea>
+            <button id="corpusUpload">load</button>
+            <form>
+                <input type="text" id="query" autocomplete="off" placeholder="Search">
+                <ul id="query_autocomplete_results"></ul>
+            </form>
+        </div>
+        
         <script type="text/javascript">
-            var tst = new TST();
-            var bigram = new GramHashMap();
+            var tst;
+            var bigram;
 
             // Handlers
             $("#corpusUpload").click(function() {
+                // Reclaim memory
+                tst = new TST();
+                bigram = new GramHashMap();
+
                 wordGrams($("#userCorpus").val(), 2).forEach(function(i, k) {
                     tst.add(i[0]);
                     bigram.add(i[0], i[1]);
                 });
                 console.log("Corpus loaded");
-                $("#userCorpus").val("");
             });
 
-            $("#query").keyup(function() {
-                var query = $(this).val();
-                if(query.length) {
-                    console.log("tree found:", tst.get(query));
-                    console.log("gram found:", bigram.get(query));
+            $("#query").keyup(function(evt) {
+                var query = $(this).val().split(" ");
+                if(tst !== undefined || bigram !== undefined || tst.size > 0 || bigram.size() > 0) {
+                    var last = query[query.length - 1];
+                    var prev = query[query.length - 2];
+                    if(query.length > 2 && evt.keyCode == 32) {
+                        populateList(prev, bigram.get(last));
+                    } else if(last.match(/[a-z0-9-_]{2,}/)) { // Ensure valid pattern
+                        populateList(last, tst.get(last));
+                    } else {
+                        populateList(undefined, undefined);
+                    }
                 }
             });
 
+            function populateList(prefix, data) {
+                $("#query_autocomplete_results").empty();
+
+                if(prefix !== undefined && data !== undefined) {
+                    data.forEach(function(i, k) {
+                        var lastCharacterLoc = i.word.indexOf(prefix[prefix.length - 1]);
+                        $("#query_autocomplete_results").append("<li><span class=\"emp\">" + i.word.slice(0, lastCharacterLoc + 1) + "</span>" + i.word.slice(lastCharacterLoc + 1, i.word.length) + "</li>");
+                        });
+                }
+            }
+
             function wordGrams(sentence, numWords) {
                 var result = new Array();
-                var words = sentence.trim().split(" ");
+                var words = sentence.replace(/\r?\n|\r/gm, " ").split(" ");
                 for(var i = 0; i < words.length - numWords; i++) {
                     for(var j = 0; j < numWords; j++) {
                         if(result[i] === undefined) {

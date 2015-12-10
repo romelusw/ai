@@ -1,25 +1,62 @@
 @import url(https://fonts.googleapis.com/css?family=Roboto:300);
 
-body{
+body {
   background: #eaeff2;
+  font-family: "Roboto", "Helvetica";
+}
+
+textarea:focus, input:focus{
+    outline: 0;
+}
+
+#wrapper {
+  width: 70%;
+  margin: 30px auto;
+}
+
+#userCorpus {
+  font-size: 14px;
+  padding: 10px 0 10px 10px;
+  border: 1px solid rgb(236, 236, 236);
+  width: 99%;
+  height: 100px;
 }
 
 #query {
-  padding: 10px 3px 10px 10px;
+  color: #39464E;
+  padding: 10px 0 10px 11px;
   font-size: 30px;
-  font-family: "Roboto", "Helvetica";
-  width: 100%;
+  width: 99%;
   letter-spacing: 2px;
   border-radius: 2px;
+  text-transform: lowercase;
   border: 1px solid #d0d0d0;
   background: rgba(255,255,255,.5);
 }
 
 #query_autocomplete_results {
-    list-style: none;
-    width: 100%;
-    max-height: 208px;
-    border: 1px solid #d0d0d0;
-    border-radius: 0 0 2px 2px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  list-style: none;
+  width: 100%;
+  max-height: 200px;
+  border: 1px solid #d0d0d0;
+  border-radius: 0 0 2px 2px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  margin: 0px;
+  padding: 0px;
+}
+#query_autocomplete_results li {
+  background-color: rgba(255,255,255,0.95);
+  padding: 10px 0px 10px 15px;
+  letter-spacing: .10em;
+  border-bottom: 1px solid #ececec;
+}
+
+#query_autocomplete_results li:hover {
+  cursor: pointer;
+  background-color:#f2f2f2;
+}
+
+.emp {
+  color: #4495d4;
+  font-weight: bold;
 }

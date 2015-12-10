@@ -31,6 +31,10 @@ function GramHashMap() {
         }
     }
 
+    this.size = function() {
+        return biGram.size;
+    }
+
     function hashFunc(key) {
         return btoa(key.toLowerCase());
     }
