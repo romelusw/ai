@@ -13,20 +13,20 @@
             <div id="corpusUpload">
                 <textarea id="userCorpus" placeholder="Enter corpus data here ..."></textarea>
                 <button style="float:left">Load Corpus</button>
-                <p id="stats"></p>
-                <div class="clear"></div>
+                <p id="stats" class="stats"></p>
             </div>
             <form id="queryForm">
                 <input type="text" id="query" autocomplete="off" placeholder="Search">
-                <ul id="query_autocomplete_results">
-                    <div class="clear"></div>
-                </ul>
+                <ul id="query_autocomplete_results"></ul>
+                <p id="searchStats" class="stats"></p>
             </form>
         </div>
         
         <script type="text/javascript">
             var tst;
             var bigram;
+            var stopWords = ["a", "am", "an", "and", "as", "at", "be", "but", "by", "do", "for", "he", "her", "him", "his", "how", "i", "ie", "if", "in", "is", "it", "its", "me", "my", "no", "not", "of", "on", "or", "our", "ours", "she", "so", "the", "them", "then", "there", "to", "too", "you"];
+            var numSuggestions = 10;
 
             // Handlers
             $("#corpusUpload button").click(function() {
@@ -39,49 +39,62 @@
                     tst.add(i[0]);
                     bigram.add(i[0], i[1]);
                 });
-                $("#stats").html("Ngram + TST generated in <span class=\"emp\">" + (new Date() - start) + "ms</span>.");
+                $("#stats").html("Ngram + TST generated in <span class=\"emp\">"+ (new Date() - start) + " ms</span>.");
             });
 
             $("#query").keyup(function(evt) {
-                var query = $(this).val().split(" ");
-                if(tst && bigram && tst.size() > 0 && bigram.size() > 0) {
-                    var last = query[query.length - 1];
-                    var prev = query[query.length - 2];
-                    if(query.length > 1 && evt.keyCode == 32) {
-                        populateList(prev, bigram.get(prev));
-                    } else if(last.match(/[a-z0-9-_]{2,}/)) { // Ensure valid pattern
-                        populateList(last, tst.get(last));
+                $("#query_autocomplete_results").empty();
+
+                var start = new Date();
+                var query = $(this).val().trim().split(" ");
+                if(query != "" && tst && bigram && tst.size() > 0 && bigram.size() > 0) {
+                    var q = query[query.length - 1];
+                    if(evt.keyCode == 32) {
+                        populateList(q, bigram.get(q));
                     } else {
-                        populateList(undefined, undefined);
+                        populateList(q, tst.get(q, numSuggestions));
                     }
                 }
+                $("#searchStats").html("Search took: <span class=\"emp\">"+ (new Date() - start) + " ms</span>.");
             });
 
             function populateList(prefix, data) {
-                $("#query_autocomplete_results").empty();
-
                 if(prefix && data) {
-                    data.forEach(function(i, k) {
-                        if(!i.word == "") {
-                            var lastCharacterLoc = i.word.indexOf(prefix[prefix.length - 1]);
-                            $("#query_autocomplete_results").append("<li><span class=\"emp\">" + i.word.slice(0, lastCharacterLoc + 1) + "</span>" + i.word.slice(lastCharacterLoc + 1, i.word.length) + "</li>");
+                    for(var i = 0; i < data.length; i++) {
+                        var word = data[i] !== undefined ? data[i].word : undefined;
+                        if(word) {
+                            var lastCharacterLoc = word.indexOf(prefix[prefix.length - 1]);
+                            $("#query_autocomplete_results").append("<li><span class=\"emp\">"
+                                + word.slice(0, lastCharacterLoc + 1) + "</span>"
+                                + word.slice(lastCharacterLoc + 1, word.length) + "</li>");
                         }
-                    });
+                    }
                 }
             }
 
             function wordGrams(sentence, numWords) {
                 var result = new Array();
-                var words = sentence.toLowerCase().replace(/[^a-zA-Z ]/g, " ").split(" ");
+                var words = sentence.replace(/[\t\r\n]/g, " ").split(" ");
+
                 for(var i = 0; i < words.length - numWords; i++) {
                     for(var j = 0; j < numWords; j++) {
                         if(result[i] === undefined) {
                             result[i] = new Array();
                         }
-                        result[i].push(words[i + j]);
+                        var normalizedText = normalize(words[i + j]);
+                        if(normalizedText) {
+                            result[i].push(normalizedText);
+                        }
                     }
                 }
                 return result;
+            }
+
+            function normalize(str) {
+                var lower = str.trim().toLowerCase();
+                var nonSpecial = lower.replace(/[$&+,:;=?@#|'"<>.^*()%!]+/g, "");
+                var nonNumeric = nonSpecial.replace(/[\d]/g, "");
+                return nonNumeric == "" || stopWords.includes(nonNumeric) ? undefined : nonNumeric;
             }
         </script>
     </body>

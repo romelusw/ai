@@ -9,7 +9,8 @@ function GramHashMap() {
 
     this.get = function(word) {
         var suggestions = new Array();
-        var elem = biGram.get(hashFunc(word));
+        var hash = hashFunc(word)
+        var elem = biGram.get(hash);
         if(elem !== undefined) {
             elem.uniGram.forEach(function(i, k) {
                 suggestions.push({"word":i.word, "count":i.frequency});
@@ -19,15 +20,17 @@ function GramHashMap() {
     }
 
     this.add = function(key, val) {
-        var hash = hashFunc(key);
-        if (biGram.get(hash) === undefined) {
-            biGram.set(hash, new GramNode(key));
-        } else {
-            biGram.get(hash).frequency++;
-        }
+        if(key) {
+            var hash = hashFunc(key);
+            if (biGram.get(hash) === undefined) {
+                biGram.set(hash, new GramNode(key));
+            } else {
+                biGram.get(hash).frequency++;
+            }
 
-        if (val !== undefined) {
-            biGram.get(hash).add(val);
+            if (val !== undefined) {
+                biGram.get(hash).add(val);
+            }
         }
     }
 
@@ -36,7 +39,14 @@ function GramHashMap() {
     }
 
     function hashFunc(key) {
-        return btoa(key.toLowerCase());
+        var newKey;
+        try {
+            newKey = btoa(key.toLowerCase());
+        }
+        catch(err) {
+            console.log("Failed to encode:", key);
+        }
+        return newKey;
     }
 
     function GramNode(word) {

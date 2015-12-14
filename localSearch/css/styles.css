@@ -49,18 +49,17 @@ textarea:focus, input:focus{
   color: #39464E;
   padding: 10px 0 10px 11px;
   font-size: 30px;
-  width: 99%;
+  width: 100%;
   letter-spacing: 2px;
   border-radius: 2px;
   text-transform: lowercase;
   border: 1px solid #d0d0d0;
+  box-sizing: border-box;
   background: rgba(255,255,255,.5);
 }
 
 #query_autocomplete_results {
   list-style: none;
-  width: 100%;
-  max-height: 200px;
   border: 1px solid #d0d0d0;
   border-radius: 0 0 2px 2px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
@@ -79,7 +78,7 @@ textarea:focus, input:focus{
   background-color:#f2f2f2;
 }
 
-#stats {
+.stats {
   float: right;
   font-size: 13px;
   padding: 0px;

@@ -8,18 +8,19 @@
 function TST() {
     var root = undefined, size = 0;
 
-    this.get = function(prefix) {
+    this.get = function(prefix, count) {
         var suggestions = new Array();
         var prefixRoot = get(root, prefix, 0);
         if(prefixRoot !== undefined) {
-            matches(prefixRoot, prefix, suggestions);
+            matches(prefixRoot, prefix, suggestions, count);
         }
         return suggestions.sort(function(a, b) {return b.count - a.count;});
     }
 
     this.add = function(word) {
-        root = add(root, word, 0);
-        var j = 3;
+        if(word) {
+            root = add(root, word, 0);
+        }
     }
 
     this.size = function() {
@@ -62,13 +63,15 @@ function TST() {
         return currNode;
     }
 
-    function matches(currNode, prefix, results) {
+    function matches(currNode, prefix, results, count) {
         if(currNode === undefined) return;
-        matches(currNode.left, prefix, results);
-        matches(currNode.middle, prefix + currNode.character, results);
-        matches(currNode.right, prefix, results);
-        if(currNode.frequency > 0) {
+        matches(currNode.left, prefix, results, count);
+        matches(currNode.middle, prefix + currNode.character, results, count);
+        matches(currNode.right, prefix, results, count);
+        if(results.length < count && currNode.frequency > 0) {
             results.push({"word":prefix + currNode.character, "count":currNode.frequency});
+        } else {
+            return;
         }
     }
 
