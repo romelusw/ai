@@ -50,7 +50,7 @@
                 if(query != "" && tst && bigram && tst.size() > 0 && bigram.size() > 0) {
                     var q = query[query.length - 1];
                     if(evt.keyCode == 32) {
-                        populateList(q, bigram.get(q));
+                        populateList(q, bigram.get(q, numSuggestions));
                     } else {
                         populateList(q, tst.get(q, numSuggestions));
                     }

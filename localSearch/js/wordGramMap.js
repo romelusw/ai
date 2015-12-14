@@ -7,14 +7,19 @@
 function GramHashMap() {
     var biGram = new Map();
 
-    this.get = function(word) {
+    this.get = function(word, count) {
         var suggestions = new Array();
         var hash = hashFunc(word)
         var elem = biGram.get(hash);
-        if(elem !== undefined) {
-            elem.uniGram.forEach(function(i, k) {
-                suggestions.push({"word":i.word, "count":i.frequency});
-            });
+        if(elem) {
+            for(var i = 0; i < elem.uniGram.length; i++) {
+                var word = elem.uniGram[i];
+                if(suggestions.length < count) {
+                    suggestions.push({"word":word.word, "count":word.frequency});
+                } else {
+                    break;
+                }
+            }
         }
         return suggestions.sort(function(a, b) {return b.count - a.count;});
     }
