@@ -12,7 +12,7 @@ function GramHashMap() {
         var hash = hashFunc(word)
         var elem = biGram.get(hash);
         if(elem) {
-            for(var i = 0; i < elem.uniGram.length; i++) {
+            for(var i = 0; i < elem.uniGram.size; i++) {
                 var word = elem.uniGram[i];
                 if(suggestions.length < count) {
                     suggestions.push({"word":word.word, "count":word.frequency});
