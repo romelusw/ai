@@ -12,14 +12,13 @@ function GramHashMap() {
         var hash = hashFunc(word)
         var elem = biGram.get(hash);
         if(elem) {
-            for(var i = 0; i < elem.uniGram.size; i++) {
-                var word = elem.uniGram[i];
+            elem.uniGram.forEach(function(i, k) {
                 if(suggestions.length < count) {
-                    suggestions.push({"word":word.word, "count":word.frequency});
+                    suggestions.push({"word":i.word, "count":i.frequency});
                 } else {
-                    break;
+                    return;
                 }
-            }
+            });
         }
         return suggestions.sort(function(a, b) {return b.count - a.count;});
     }
