@@ -95,7 +95,7 @@ public class BSGame extends JFrame implements ActionListener, MouseListener {
         p2Wins = 0;
 
 //	    p1 = new MyPlayer(BSGame.GAME_PLAYER1); // Insert your player here!
-        p1 = new Player1(BSGame.GAME_PLAYER1);
+        p1 = new AIPlayer(BSGame.GAME_PLAYER1);
 
 
 //	    p2 = new MyPlayer(BSGame.GAME_PLAYER2);  // Insert your player here
