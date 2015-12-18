@@ -14,17 +14,19 @@ public class NPuzzleSolver {
      */
     public static void main(String[] args) {
         final AStar aStar = new AStar();
-        final Board s = new Board(new int[]{ 3, 7, 8, 0, 1, 2, 5, 4, 6 }, 3);
-        final Board e = new Board(new int[]{ 1, 2, 3, 4, 5, 6, 7, 8, 0 }, 8);
-        final StringBuilder sb = new StringBuilder("Original board:\n");
+        final Board s = new Board(new int[]{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 15, 14, 0, 13}, 14);
+        final Board e = new Board(new int[]{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 0}, 15);
+        final StringBuilder sb = new StringBuilder();
 
         long start = System.currentTimeMillis();
-        Node curr = aStar.findPath(new Node(s), new Node(e));
+        final Node goal = aStar.findPath(new Node(s), new Node(e));
+        long end = System.currentTimeMillis() - start;
 
-        while(curr != null) {
-            sb.append(curr.getBoard()).append("\n");
-            curr = curr.getParent();
+        if (goal != null) {
+            aStar.printPath(goal, sb);
+            System.out.println(sb.append(String.format("Took %d ms", end)));
+        } else {
+            System.err.println("Could not find a solution within a reasonable amount of time.");
         }
-        System.out.println(sb.append(String.format("Took %d ms", System.currentTimeMillis() - start)));
     }
 }

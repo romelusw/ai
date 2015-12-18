@@ -13,6 +13,7 @@ public class Node {
     private Board board;
     private int costFromStart;
     private int costToGoal;
+    private int totalCost;
 
     public Node getParent() {
         return parent;
@@ -34,12 +35,17 @@ public class Node {
         this.costFromStart = costFromStart;
     }
 
-    public void setCostToGoal(int costToGoal) {
-        this.costToGoal = costToGoal;
+    public int getCostToGoal() {
+        return costToGoal;
+    }
+
+    public void setCostToGoal(int cost2Goal) {
+        costToGoal = cost2Goal;
+        totalCost = costFromStart + costToGoal;
     }
 
     public int getTotalCost() {
-        return costFromStart + costToGoal;
+        return totalCost;
     }
 
     public Node(final Board brd) {
@@ -53,9 +59,9 @@ public class Node {
      */
     public List<Node> getNeighbors() {
         final List<Node> retVal = new ArrayList<>();
-        for(final Board.Direction d : Board.Direction.values()) {
+        for (final Board.Direction d : Board.Direction.values()) {
             final Board brd = Board.slideHole(board, d);
-            if(brd != null) {
+            if (brd != null && !brd.equals(board)) {
                 retVal.add(new Node(brd));
             }
         }
@@ -66,7 +72,7 @@ public class Node {
      * Heuristic function which calculates the estimated distance between two nodes.
      *
      * @param start the starting node
-     * @param end the ending node
+     * @param end   the ending node
      * @return the approximate cost between the two nodes
      */
     public static int manhattanDistance(final Node start, final Node end) {
@@ -87,12 +93,12 @@ public class Node {
 
     @Override
     public boolean equals(final Object n) {
-        if(!(n instanceof Node)) return false;
-        if(((Node) n).getBoard().getGameboard().length != board.getGameboard().length) return false;
+        if (!(n instanceof Node)) return false;
+        if (((Node) n).getBoard().getGameboard().length != board.getGameboard().length) return false;
 
         final int[] nBoard = ((Node) n).getBoard().getGameboard();
-        for(int i = 0; i < nBoard.length; i++) {
-            if(nBoard[i] != board.getGameboard()[i]) {
+        for (int i = 0; i < nBoard.length; i++) {
+            if (nBoard[i] != board.getGameboard()[i]) {
                 return false;
             }
         }

@@ -108,13 +108,15 @@ public class Board {
 
     @Override
     public String toString() {
-        final String header = new String(new char[10 + rowSize]).replace('\0', '-').concat("\n");
+        int padding = 5;
+        final String header = new String(new char[padding * rowSize]).replace('\0', '-').concat("\n");
         final StringBuilder sb = new StringBuilder().append(header);
         int row = 1;
 
-        for(int i = 0; i < gameboard.length; i++) {
-            sb.append("| ").append(gameboard[i] == 0 ? " " : gameboard[i]).append(" ");
-            if(row == rowSize) {
+        for (int i = 0; i < gameboard.length; i++) {
+            final int digit = gameboard[i];
+            sb.append("| ").append(digit == 0 ? "  " : (Math.log10(digit) + 1 < 2 ? " " + digit : digit)).append(" ");
+            if (row == rowSize) {
                 sb.append("| \n").append(header);
                 row = 0;
             }
